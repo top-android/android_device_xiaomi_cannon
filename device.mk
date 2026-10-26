@@ -274,9 +274,7 @@ PRODUCT_BOOT_JARS += \
     mediatek-services \
     mediatek-telecom-common \
     mediatek-telephony-common \
-    mediatek-telephony-base \
-    mediatek-ims-common \
-    mediatek-ims-base
+    mediatek-telephony-base
 
 # Power
 PRODUCT_COPY_FILES += \
@@ -289,12 +287,24 @@ PRODUCT_PACKAGES += \
     vendor.mediatek.hardware.mtkpower@1.1.vendor \
     vendor.mediatek.hardware.mtkpower@1.2.vendor
 
+# HIDL mtkpower stub service: the A12 camera blob binds @1.0::IMtkPerf/default,
+# so the stub (which implements 1.0/1.1/1.2) must be installed and started.
+PRODUCT_PACKAGES += \
+    vendor.mediatek.hardware.mtkpower@1.2-service.stub
+
 PRODUCT_PACKAGES += \
     android.hardware.power-service-mediatek \
     android.hardware.power@1.0.vendor \
     android.hardware.power@1.1.vendor \
     android.hardware.power@1.2.vendor \
     android.hardware.power@1.3.vendor
+
+# Vendor AIDL binder context manager.
+# Without /vendor/bin/vndservicemanager, libbinder never uses /dev/vndbinder and
+# no vendor AIDL HAL (e.g. the AIDL power HAL) can be registered or discovered,
+# which makes system_server block forever in PowerManagerService.nativeInit.
+PRODUCT_PACKAGES += \
+    vndservicemanager
 
 # Power Off Alarm
 PRODUCT_PACKAGES += \
@@ -392,7 +402,7 @@ include $(LOCAL_PATH)/configs/vendor_logtag.mk
 PRODUCT_COMPATIBLE_PROPERTY_OVERRIDE := true
 
 # Shipping API level
-PRODUCT_SHIPPING_API_LEVEL := 29
+PRODUCT_SHIPPING_API_LEVEL := 34
 
 # Seccomp policy
 PRODUCT_COPY_FILES += \
@@ -409,7 +419,8 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     libsensorndkbridge \
-    libshim_sensors
+    libshim_sensors \
+    libshim_cannon_vendor
 
 # GPS
 PRODUCT_PACKAGES += \
