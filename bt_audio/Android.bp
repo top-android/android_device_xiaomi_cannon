@@ -1,0 +1,15 @@
+// Registers the AIDL Bluetooth Audio HAL (IBluetoothAudioProviderFactory).
+// Runs in the hal_audio_default domain so it can add_service(hal_audio_service),
+// which is the SELinux type this AIDL service is mapped to.
+cc_binary {
+    name: "android.hardware.bluetooth.audio-service.cannon",
+    vendor: true,
+    relative_install_path: "hw",
+    init_rc: ["android.hardware.bluetooth.audio-service.cannon.rc"],
+    srcs: ["bt_audio_service_main.cpp"],
+    shared_libs: [
+        "android.hardware.bluetooth.audio-impl",
+        "libbinder_ndk",
+        "liblog",
+    ],
+}

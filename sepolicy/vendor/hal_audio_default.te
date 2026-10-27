@@ -22,3 +22,9 @@ get_prop(hal_audio_default, vendor_mtk_default_prop)
 get_prop(hal_audio_default, vendor_mtk_audio_prop)
 set_prop(hal_audio_default, vendor_mtk_audio_prop)
 get_prop(hal_audio_default, vendor_mtk_wmt_prop)
+
+# 2026-10-27: 显式授权音频 HAL 服务进程注册蓝牙音频 AIDL provider。
+# 理论上 hal_attribute_service(hal_audio, hal_audio_service) 已经通过
+# hal_audio_server 属性给了 add，但实测（permissive 立刻变 0）仍被拒，
+# 这里补一条直接规则排除属性展开的问题。
+allow hal_audio_default hal_audio_service:service_manager { add find };
