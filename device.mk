@@ -483,6 +483,17 @@ PRODUCT_PACKAGES += \
     wpa_supplicant \
     libwifi-hal-mt66xx
 
+# 2026-10-27: 不再单独起 bt-audio-service 进程。
+# BluetoothAudioSession 的会话状态是进程内的，provider 必须和
+# audio.bluetooth.default 跑在同一个进程（也就是 MTK 的
+# android.hardware.audio.service）里，否则 HAL 侧永远看到
+# "session_type=... is not ready"。现在由 audio.bluetooth.default 自己在
+# adev_open() 里调用 createIBluetoothAudioProviderFactory() 注册，
+# 见 packages/modules/Bluetooth/system/audio_bluetooth_hw/。
+# 保留 bt_audio/ 目录仅供排查用，不再进包。
+# PRODUCT_PACKAGES += \
+#     android.hardware.bluetooth.audio-service.cannon
+
 PRODUCT_PACKAGES += \
     libkeystore-wifi-hidl \
     libkeystore-engine-wifi-hidl
