@@ -31,3 +31,10 @@
 
 # Mlipay
 /vendor/bin/mlipayd@1\.1                                                u:object_r:hal_mlipay_default_exec:s0
+
+# Power (AIDL, MTK impl)
+/(vendor|system/vendor)/bin/hw/android\.hardware\.power-service-mediatek       u:object_r:hal_power_default_exec:s0
+
+# Bluetooth Audio (AIDL) -- runs in hal_audio_default domain to register
+# android.hardware.bluetooth.audio.IBluetoothAudioProviderFactory (hal_audio_service)
+/(vendor|system/vendor)/bin/hw/android\.hardware\.bluetooth\.audio-service\.cannon  u:object_r:hal_audio_default_exec:s0

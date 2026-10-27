@@ -1,0 +1,5 @@
+service bt-audio-service /vendor/bin/hw/android.hardware.bluetooth.audio-service.cannon
+    class hal
+    user audioserver
+    group audio net_bt net_bt_admin bluetooth
+    capabilities BLOCK_SUSPEND

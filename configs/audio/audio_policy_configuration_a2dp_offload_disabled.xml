@@ -203,8 +203,12 @@
                              channelMasks="AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_STEREO"/>
                 </devicePort>
                 <devicePort tagName="BT SCO Headset Mic" type="AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET" role="source">
+                    <!-- 输入端口必须用 IN_* 掩码。原厂 MTK 配置写成 OUT_STEREO(0x3)，
+                         A12 的 legacy 转换不校验所以没暴露；A14 走 AIDL 后
+                         legacy2aidl_audio_channel_mask_t_AudioChannelLayout(mask, isInput=true)
+                         拒绝 0x3 → 整个 listAudioPorts 返回 BAD_VALUE → 框架端口缓存永久失效。 -->
                     <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
-                             samplingRates="8000 16000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+                             samplingRates="8000 16000" channelMasks="AUDIO_CHANNEL_IN_MONO"/>
                 </devicePort>
                 <devicePort tagName="AUX Digital In" type="AUDIO_DEVICE_IN_AUX_DIGITAL" role="source">
                     <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
