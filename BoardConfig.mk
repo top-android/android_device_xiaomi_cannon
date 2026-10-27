@@ -23,7 +23,7 @@ TARGET_2ND_CPU_VARIANT_RUNTIME := cortex-a55
 
 # Build system
 BUILD_BROKEN_DUP_RULES := true
-BUILD_BROKEN_ENFORCE_SYSPROP_OWNER := true
+# BUILD_BROKEN_ENFORCE_SYSPROP_OWNER := true
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 
 # APEX
@@ -118,6 +118,11 @@ TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 TARGET_RECOVERY_UI_BLANK_UNBLANK_ON_INIT := true
 TARGET_RECOVERY_UI_MARGIN_HEIGHT := 60
 
+# 2026-10-27  蓝牙 A2DP：让 audio HAL 进程看不到 /vendor/bin/vndservicemanager，
+# 否则它会把整个进程绑到 /dev/vndbinder，蓝牙音频 provider 注册到错误的服务管理器。
+# 详见 configs/fs_config_vendor.fs 与 docs/2026-10-27-bt-a2dp-vndbinder-domain.md
+TARGET_FS_CONFIG_GEN += $(DEVICE_PATH)/configs/fs_config_vendor.fs
+
 # Sepolicy
 include device/mediatek/sepolicy_vndr/SEPolicy.mk
 BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
@@ -175,5 +180,36 @@ WIFI_DRIVER_STATE_ON := "1"
 WIFI_DRIVER_STATE_OFF := "0"
 WIFI_HIDL_UNIFIED_SUPPLICANT_SERVICE_RC_ENTRY := true
 
+# A12 厂商 blob ↔ A14 框架库 的符号缺失兼容（LineageOS 官方 LD_SHIM_LIBS 机制）
+# 原理：bionic/linker 在加载左侧目标时，把右侧垫片预加载进同一进程/命名空间，
+#       由垫片补齐 A14 删掉的符号（gBnsConstructorMap / GraphicBufferMapper::lock /
+#       String16 移动语义 / strncpy16 / convertToSensorEvent）。
+# 注意：只映射具体 HAL 进程，不映射 libhidlbase.so 等全局平台库 —— 否则
+#       surfaceflinger/zygote 等也会被垫片波及，有卡第一屏风险（fix18 的教训）。
+TARGET_LD_SHIM_LIBS := \
+    /vendor/bin/hw/android.hardware.thermal@2.0-service.mtk|libshim_cannon_vendor.so \
+    /vendor/bin/hw/android.hardware.gnss-service.mediatek|libshim_cannon_vendor.so \
+    /vendor/bin/hw/camerahalserver|libshim_cannon_vendor.so \
+    /vendor/bin/hw/android.hardware.bluetooth@1.1-service-mediatek|libshim_cannon_vendor.so \
+    /vendor/bin/hw/android.hardware.wifi@1.0-service-lazy|libshim_cannon_vendor.so \
+    /vendor/bin/hw/wpa_supplicant|libshim_cannon_vendor.so \
+    /vendor/bin/hw/hostapd|libshim_cannon_vendor.so \
+    /vendor/bin/hw/rild|libshim_cannon_vendor.so \
+    /vendor/bin/hw/mtkfusionrild|libshim_cannon_vendor.so \
+    /vendor/bin/mnld|libshim_sensors.so \
+    /vendor/bin/hw/android.hardware.sensors@2.0-service.multihal-mediatek|libshim_sensors.so \
+    /vendor/lib64/libaalservice.so|libshim_sensors.so \
+    /vendor/lib64/libcam.utils.sensorprovider.so|libshim_sensors.so \
+    /vendor/bin/hw/vendor.mediatek.hardware.pq@2.2-service|libshim_cannon_vendor.so \
+    /system/lib64/libsource.so|libshim_cannon_system.so \
+    /system/lib64/libsink.so|libshim_cannon_system.so
+
 # Inherit the proprietary files
 include vendor/xiaomi/cannon/BoardConfigVendor.mk
+
+# Disable VINTF manifest compatibility enforcement for this legacy device:
+# the Android 14 framework compatibility matrix does not declare cannon's old
+# HIDL HALs, and a plain 'PRODUCT_ENFORCE_VINTF_MANIFEST := false' is force
+# overwritten by build/make/core/config.mk (it becomes PRODUCT_FULL_TREBLE=$
+# (PRODUCT_SHIPPING_API_LEVEL>=26)), so the _OVERRIDE variable is required.
+PRODUCT_ENFORCE_VINTF_MANIFEST_OVERRIDE := false

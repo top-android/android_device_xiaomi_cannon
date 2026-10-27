@@ -268,13 +268,19 @@ PRODUCT_PACKAGES += \
 PRODUCT_ENFORCE_RRO_TARGETS := *
 
 # Mediatek
+# 2026-10-27 IMS：mediatek-telephony-common（boot jar）里直接引用
+# mediatek-ims-base 的类（com/mediatek/ims/internal/IMtkImsService、MtkImsManager…），
+# 但 mediatek-ims-base/-common 之前只装进 /system/framework、没进 boot classpath，
+# 运行到 IMS 路径就 NoClassDefFound。原厂 bootclasspath.pb 里这三个都在。
 PRODUCT_BOOT_JARS += \
     mediatek-common \
     mediatek-framework \
     mediatek-services \
     mediatek-telecom-common \
     mediatek-telephony-common \
-    mediatek-telephony-base
+    mediatek-telephony-base \
+    mediatek-ims-common \
+    mediatek-ims-base
 
 # Power
 PRODUCT_COPY_FILES += \
@@ -332,7 +338,8 @@ PRODUCT_PACKAGES += \
 
 # IMS
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/permissions/privapp-permissions-mediatek.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-mediatek.xml
+    $(LOCAL_PATH)/configs/permissions/privapp-permissions-mediatek.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-mediatek.xml \
+    $(LOCAL_PATH)/configs/permissions/com.mediatek.wfo.legacy.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/com.mediatek.wfo.legacy.xml
 
 # FM Radio
 PRODUCT_PACKAGES += \
@@ -420,7 +427,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libsensorndkbridge \
     libshim_sensors \
-    libshim_cannon_vendor
+    libshim_cannon_vendor \
+    libshim_cannon_system
 
 # GPS
 PRODUCT_PACKAGES += \
