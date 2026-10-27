@@ -1,3 +1,48 @@
+// 本设备（cannon, MT6853T）A12 厂商 blob 与 A14 框架库之间的符号兼容垫片
+//
+// 背景：厂商堆栈是 A12，系统框架是 A14。老的 A12 二进制进程会从 /system 加载
+// A14 的 libhidlbase/libbinder/libutils/libui，而 A14 删掉/改动了部分符号
+// （gBnsConstructorMap、GraphicBufferMapper::lock、String16 移动语义、
+//  strncpy16 等），导致 "cannot locate symbol ..." 而崩溃。
+//
+// 正解（LineageOS 官方做法）：不修改任何 blob 文件，而是用 LINKER 的
+// LD_SHIM_LIBS 机制，在加载目标时把垫片“预加载”进同一进程/命名空间，
+// 由垫片补齐缺失符号。映射表写在 BoardConfig.mk 的 TARGET_LD_SHIM_LIBS。
+//
+// 关键设计：映射的 key 直接写具体的 /vendor/bin/<HAL 进程>，
+// 因此垫片只进入这些本来就已经坏掉的 HAL 进程，
+// 不会影响 surfaceflinger/zygote/system_server 等引导关键进程。
+//
+// 源码直接复用 hardware/lineage/compat/ 下的 LineageOS 官方实现。
+
+cc_library_shared {
+    name: "libshim_cannon_vendor",
+    // 源码拷自 hardware/lineage/compat/（LineageOS 官方实现，Apache-2.0）
+    // soong 的 srcs 相对本模块目录解析，故必须放在本地
+    srcs: [
+        "src/gBnsConstructorMap.cpp",
+        "src/Fence.cpp",
+        "src/GraphicBuffer.cpp",
+        "src/GraphicBufferMapper.cpp",
+        "src/IServiceManager.cpp",
+        "src/PermissionCache.cpp",
+        "src/Thread.cpp",
+        "src/String16.cpp",
+        "src/String16_shim.cpp",
+    ],
+    shared_libs: [
+        "libhidlbase",
+        "libui",
+        "libsync",
+        "libutils",
+        "libbinder",
+        "libdl",
+    ],
+    vendor: true,
+    compile_multilib: "both",
+}
+
+// 传感器符号（convertToSensorEvent）—— 原有垫片，mnld 需要
 cc_library_shared {
     name: "libshim_sensors",
     whole_static_libs: [
@@ -9,4 +54,35 @@ cc_library_shared {
         "android.hardware.sensors@1.0"
     ],
     vendor: true
+}
+
+// 2026-10-27 vtservice（MTK 视频电话服务，装在 system 分区）
+//
+// /system/lib64/libsource.so 是 A12 的 MTK blob，引用 A12 版
+// GraphicBufferMapper::lock(6 参数) 与 unlock(1 参数)；A14 的 libui 已把这两个
+// 签名都改掉（lock 去掉 outBytesPerPixel/outBytesPerStride，unlock 增加 fence），
+// 于是 vtservice 报 "cannot locate symbol ... GraphicBufferMapper4lockE..."，init 每 5s 重启一次。
+//
+// 不能复用 libshim_cannon_vendor：那个模块是 vendor: true，产物落在 /vendor/lib64，
+// 而 libsource.so 在 system 命名空间里搜不到 vendor 路径；而且它把 String16/Thread/
+// PermissionCache 等垫片符号一起带进来，会覆盖 vtservice 进程里 A14 libutils 的
+// 正常实现。所以这里只编 GraphicBufferMapper 一份源码，装到 /system/lib64。
+cc_library_shared {
+    name: "libshim_cannon_system",
+    srcs: [
+        "src/GraphicBufferMapper.cpp",
+        "src/AudioTrack.cpp",
+    ],
+    shared_libs: [
+        "libaudioclient",
+        "libui",
+        "libsync",
+        "libutils",
+    ],
+    // AudioTrack.h 会 include <media/Modulo.h>，那个头在 libmedia 里，
+    // 而 libaudioclient 没有把它导出，所以显式挂上（只取头，不产生运行时依赖）。
+    header_libs: [
+        "libmedia_headers",
+    ],
+    compile_multilib: "64",
 }
