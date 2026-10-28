@@ -518,3 +518,14 @@ PRODUCT_SOONG_NAMESPACES += \
 
 # Inherit the proprietary files
 $(call inherit-product, vendor/xiaomi/cannon/cannon-vendor.mk)
+
+# 系统更新（Updater）：指向自己的元数据仓库
+# Updater 会把 {device} 换成 ro.product.device，本机是 cannon → cannon.json
+PRODUCT_PROPERTY_OVERRIDES += \
+    lineage.updater.uri=https://cdn.jsdelivr.net/gh/top-android/releases@main/{device}.json
+
+# Gboard 预装：base + 密度 split 已用 APKEditor 合并成单包，模块定义在
+# vendor/xiaomi/cannon/gboard/Android.bp（presigned，装到 /product/app/Gboard/）
+# 保留 AOSP LatinIME 作为兜底，默认输入法由 InputMethodInfoUtils 自动选中 Gboard
+PRODUCT_PACKAGES += \
+    Gboard
