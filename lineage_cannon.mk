@@ -23,6 +23,10 @@ PRODUCT_MANUFACTURER := Xiaomi
 PRODUCT_GMS_CLIENTID_BASE := android-xiaomi
 
 PRODUCT_BUILD_PROP_OVERRIDES += \
-    PRIVATE_BUILD_DESC="cannong-user 12 SP1A.210812.016 V13.0.3.0.SJEMIXM release-keys"
+    BuildDesc="cannong-user 12 SP1A.210812.016 V13.0.3.0.SJEMIXM release-keys"
+# A15: build.prop 改由 build/soong/scripts/gen_build_prop.py 生成，override key 必须是
+# product_config.json 里的 CamelCase 变量名；旧的 PRIVATE_BUILD_DESC 已不被识别（会报
+# Key "PRIVATE_BUILD_DESC" isn't a valid prop override）。ro.build.description 取自
+# config['BuildDesc']（gen_build_prop.py:274），故此处改用 BuildDesc=（cannon A15 适配）。
 
 BUILD_FINGERPRINT := Redmi/cannong_global/cannong:12/SP1A.210812.016/V13.0.3.0.SJEMIXM:user/release-keys

@@ -62,6 +62,12 @@ PRODUCT_PACKAGES += \
     android.hardware.fastboot@1.1-impl-mock \
     fastbootd
 
+# A15 fsgen: system_ext/lib 与 lib64 同名 prebuilt .so 改用 cc_prebuilt_library_shared
+# （见 vendor/xiaomi/cannon/Android.bp；原 PRODUCT_COPY_FILES 触发 packaging conflict）
+PRODUCT_PACKAGES += \
+    libcannon_audiotoolkit_system_ext \
+    libcannon_videotelephony_system_ext
+
 # Audio
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio/audio_policy.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy.conf \
@@ -426,6 +432,8 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     libsensorndkbridge \
+    libbase_shim \
+    libshim_cpp_verbose_abort \
     libshim_sensors \
     libshim_cannon_vendor \
     libshim_cannon_system
