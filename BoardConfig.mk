@@ -95,6 +95,20 @@ TARGET_COPY_OUT_PRODUCT := product
 TARGET_COPY_OUT_SYSTEM_EXT := system_ext
 TARGET_COPY_OUT_VENDOR := vendor
 
+# OTA / Update 机制
+# 2026-10-30: cannon 是 A-only + 动态分区(super) 设备（fstab.mt6853 的 system/vendor/
+#   product/system_ext/boot/recovery 均无 _a/_b slot 后缀，boot/recovery 为独立分区）。
+#   Android 15 / LOS22.2 的 build/make/core/board_config.mk:945-946 会把“空”的
+#   AB_OTA_UPDATER 默认成 true（新构建系统默认按 A/B 处理），导致 `m bacon` 走
+#   GenerateAbOtaPackage 生成 A/B OTA，进而断言
+#   "META/ab_partitions.txt is required for ab_update" 失败（A-only 无该文件，
+#   build4 即卡在此处）。显式设为 false：
+#     → board_config.mk 推得 TARGET_OTA_ALLOW_NON_AB := true；
+#     → ota_from_target_files 分派到 non_ab_ota.GenerateNonAbOtaPackage/
+#       WriteFullOTAPackage（支持 use_dynamic_partitions + build_super_empty_partition）；
+#     → 产出可用 recovery `adb sideload` 的全量 OTA zip。
+AB_OTA_UPDATER := false
+
 # Platform
 TARGET_BOARD_PLATFORM := mt6853
 BOARD_HAS_MTK_HARDWARE := true
@@ -145,7 +159,10 @@ BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX_LOCATION := 1
 BOARD_AVB_RECOVERY_KEY_PATH := vendor/lineage-priv/keys/avb_release.pem
 BOARD_AVB_RECOVERY_ALGORITHM := SHA256_RSA2048
 BOARD_AVB_RECOVERY_ROLLBACK_INDEX := 1
-BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION := 1
+# 2026-10-30: 原为 1，与 BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX_LOCATION(=1) 冲突，
+# avbtool 报 "Rollback Index Location 1 is already in use" → vbmeta.img 生成失败。
+# 改为唯一值 3（vbmeta_system=1, vbmeta_vendor=2, recovery=3, 主 vbmeta 默认 0）。
+BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION := 3
 BOARD_AVB_VBMETA_VENDOR := vendor
 BOARD_AVB_VBMETA_VENDOR_KEY_PATH := vendor/lineage-priv/keys/avb_release.pem
 BOARD_AVB_VBMETA_VENDOR_ALGORITHM := SHA256_RSA2048

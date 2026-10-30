@@ -42,6 +42,24 @@ cc_library_shared {
     compile_multilib: "both",
 }
 
+// 2026-10-30 第十八轮：补 A15 libc++ 新符号 std::__1::__libcpp_verbose_abort
+//
+// A15 的 /system/lib64/libunwindstack.so 引用 _ZNSt3__122__libcpp_verbose_abortEPKcz，
+// A12 vendor 的 /vendor/lib64/libc++.so 不提供。当 vendor gralloc HAL 在 sphal 命名空间
+// 被 dlopen 时该符号解析失败 → gralloc-mapper 缺失 → GraphicBufferMapper LOG_ALWAYS_FATAL
+// → media.swcodec 崩溃循环（没声）。垫片只导出这一个符号，patchelf 烤进 gralloc impl。
+cc_library_shared {
+    name: "libshim_cpp_verbose_abort",
+    srcs: [
+        "src/CppVerboseAbort.cpp",
+    ],
+    shared_libs: [
+        "liblog",
+    ],
+    vendor: true,
+    compile_multilib: "both",
+}
+
 // 传感器符号（convertToSensorEvent）—— 原有垫片，mnld 需要
 cc_library_shared {
     name: "libshim_sensors",

@@ -24,7 +24,9 @@
 /(vendor|system/vendor)/bin/hw/android\.hardware\.light-service\.cannon                          u:object_r:hal_light_default_exec:s0
 
 # Sensors
-/vendor/bin/hw/android\.hardware\.sensors@2.1-service\.cannon-multihal                           u:object_r:mtk_hal_sensors_exec:s0
+# A15: mtk_hal_sensors_exec 在本树未定义(全树无该 type) → 改用 AOSP 内建的 hal_sensors_default_exec
+# (system/sepolicy/vendor/hal_sensors_default.te 定义，sensors multihal 标准域)（cannon A15 适配）
+/vendor/bin/hw/android\.hardware\.sensors@2.1-service\.cannon-multihal                           u:object_r:hal_sensors_default_exec:s0
 
 # Thermals
 /vendor/bin/mi_thermald       u:object_r:mi_thermald_exec:s0
@@ -38,3 +40,11 @@
 # Bluetooth Audio (AIDL) -- runs in hal_audio_default domain to register
 # android.hardware.bluetooth.audio.IBluetoothAudioProviderFactory (hal_audio_service)
 /(vendor|system/vendor)/bin/hw/android\.hardware\.bluetooth\.audio-service\.cannon  u:object_r:hal_audio_default_exec:s0
+
+# libshims 垫片（A12 vendor blob 在 A15 上缺 libc++ 新符号 std::__1::__libcpp_verbose_abort）
+# 该垫片被 patchelf 烤进 gralloc mapper impl 的 NEEDED；mapper impl(@4.0-impl-mediatek) 标签
+# 已是 same_process_hal_file，会被 surfaceflinger / mediaswcodec 直接 dlopen → 其 NEEDED 的
+# 垫片必须同为 same_process_hal_file，否则 enforcing 下 surfaceflinger 读它被拒(vendor_file)
+# → mapper dlopen 失败 → "gralloc-mapper is missing" → SF SIGABRT → 卡第一屏(D1)。
+# 与 mapper impl 同标签即可被同一批允许读 same_process_hal_file 的进程读取。
+/(vendor|system/vendor)/lib(64)?/libshim_cpp_verbose_abort\.so   u:object_r:same_process_hal_file:s0
