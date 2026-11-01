@@ -71,6 +71,13 @@ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_SYSTEM_EXTIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
+# A16 老 vendor：m vendorimage 出裸镜像后必须装配注入库/打 blob 补丁，否则黑屏。
+# 【方案①·staging 预注入·真单步】build/make/core/Makefile 的 build-vendorimage-target 在调用
+# build_image **之前**按本变量运行 tools/a16_preassemble_vendor.sh：把库拷进 staging $P/vendor、
+# 就地打 blob 补丁、把新文件登记进 file_list.txt，再由 build_image 一并打包并由 file_contexts.bin
+# 自动打 SELinux 标签。**不用 mount**（build 的 nsjail user namespace 内禁 loop mount）。
+# 使 `m vendorimage` / `m bacon` 单步产出已装配的完整 vendor.img。留空则退化为裸镜像。
+BOARD_CANNON_VENDOR_PREASSEMBLE := $(DEVICE_PATH)/tools/a16_preassemble_vendor.sh
 BOARD_SUPER_PARTITION_SIZE := 9126805504 # TODO: Fix hardcoded value
 BOARD_SUPER_PARTITION_GROUPS := xiaomi_dynamic_partitions
 BOARD_XIAOMI_DYNAMIC_PARTITIONS_PARTITION_LIST := system vendor product system_ext
