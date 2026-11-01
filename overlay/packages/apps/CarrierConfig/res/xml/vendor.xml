@@ -34,4 +34,19 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.-->
     <carrier_config gid1="6230" mcc="310" mnc="240">
         <boolean name="mtk_key_roaming_bar_guard_bool" value="true"/>
     </carrier_config>
+
+    <!-- VoLTE 使能（2026-11-02 修 A16 纯 LTE 冷启 IMS 不注册）。
+         ★关键根因：本 ROM 的 DefaultCarrierConfigService.checkFilters() 对 mnc 只做单值 equals
+         （src:308 `value.equals(id.getMnc())`），**不支持逗号列表**——旧写法 mnc="01,06,09"
+         会拿整串去和 SIM 的 "06" 比 → 永远 false → 整个 carrier_config 块被判不匹配而丢弃，
+         于是 carrier_volte_available_bool 根本没生效（dumpsys 一直 false）。
+         ★修法：只按 mcc="460"（中国大陆）匹配。checkFilters 只检查 XML 里已写出的属性，
+         不写 mnc 即对所有 460 SIM 生效，一网打尽移动/联通/电信，彻底绕开 mnc 逗号 bug。
+         另补 provisioned=true，让框架认为 VoLTE 已开通，真正触发 IMS PDN/VoLTE 语音能力。 -->
+    <carrier_config mcc="460">
+        <boolean name="carrier_volte_available_bool" value="true"/>
+        <boolean name="carrier_vt_available_bool" value="true"/>
+        <boolean name="carrier_volte_provisioned_bool" value="true"/>
+        <boolean name="carrier_volte_provisioning_required_bool" value="false"/>
+    </carrier_config>
 </carrier_config_list>

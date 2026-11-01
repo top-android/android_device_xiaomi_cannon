@@ -104,3 +104,21 @@ cc_library_shared {
     ],
     compile_multilib: "64",
 }
+
+// 2026-11-01 A16：把 libnetutils 的 vendor 变体拉进 /vendor/lib64
+//
+// /vendor/bin/hw/tetheroffloadservice（A12 vendor blob）ELF NEEDED libnetutils.so，
+// 但 A16 重建 vendor 时没把它放进 /vendor/lib64（proprietary-files.txt 亦未登记）→
+// linker "library libnetutils.so not found" → HAL 起不来 → Tethering 无限等待
+// android.hardware.tetheroffload.config@1.0::IOffloadConfig/default（每次 1s 重试）→
+// startTethering 卡死 → 设置里开热点 ANR。
+//
+// 本模块本身是空壳，仅靠 shared_libs 依赖把 vendor_available:true 的 libnetutils
+// 以 vendor 变体编出来并装到 /vendor/lib64（顺带 /vendor/lib）。不改任何 blob。
+cc_library_shared {
+    name: "libnetutils_vendor_dep",
+    vendor: true,
+    srcs: ["src/netutils_dep_stub.c"],
+    shared_libs: ["libnetutils"],
+    compile_multilib: "both",
+}

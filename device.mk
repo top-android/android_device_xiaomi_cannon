@@ -13,6 +13,14 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-4096-dalvik-heap.mk)
 # Project ID Quota
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 
+# IMS A12-blob compat: A16 移除了 com.android.internal.telephony.metrics.TelephonyMetrics
+# （改由 MetricsCollector + *Stats 架构），而原厂 com.mediatek.ims(A12 blob) 的
+# ImsRILAdapter/MwiRIL 仍直接引用该类 → 启动即 NoClassDefFoundError、IMS 进程反复崩。
+# hardware/lineage/compat 已提供 telephony-common-stub（同名类 + getInstance/writeRil* 空实现），
+# 这里把 compat.mk 继承进来，使 stub 进 PRODUCT_PACKAGES 且置于 boot classpath，
+# 让 com.mediatek.ims 能在运行期解析到该类。
+$(call inherit-product, hardware/lineage/compat/frameworks/compat.mk)
+
 # Permissions
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.low_latency.xml \
@@ -143,9 +151,11 @@ PRODUCT_PACKAGES += \
     disable_configstore
 
 # Display
+# A16-D7: memtrack 源码 HAL 在 A16 更名为 android.hardware.memtrack-service.mediatek
+# （A15 为 -mali 后缀；A16 的 memtrack 源码已含 MemtrackDeviceMali.cpp，等价）。
 PRODUCT_PACKAGES += \
     android.hardware.graphics.composer@2.1-service \
-    android.hardware.memtrack-service.mediatek-mali
+    android.hardware.memtrack-service.mediatek
 
 PRODUCT_PACKAGES += \
     libfmq \
@@ -224,12 +234,17 @@ PRODUCT_PACKAGES += \
     libavservices_minijail_vendor
 
 # Vibrator
+# A16-D7: A16 淘汰 HIDL vibrator@1.0-impl（AOSP vibrator/1.0 已删），改用 mediatek AIDL
+# vibrator 源码 HAL（hardware/mediatek/aidl/vibrator，android.hardware.vibrator-V2-ndk）。
 PRODUCT_PACKAGES += \
-    android.hardware.vibrator@1.0-impl:64
+    android.hardware.vibrator-service.mediatek
 
 # CAS
+# A16-D2: 改为直接安装基模块，避免 -lazy 的 overrides 把基模块 cas@1.2-service
+# （compile_multilib:prefer32，仅 arm 变体）记成 overridden_dep 后被 fsgen 生成的
+# "both" vendor image 要求出 arm64 变体 → "missing variant ... arm64" 报错。
 PRODUCT_PACKAGES += \
-    android.hardware.cas@1.2-service-lazy
+    android.hardware.cas@1.2-service
 
 # Neural Networks
 PRODUCT_PACKAGES += \
@@ -381,9 +396,12 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/gnss/agps_profiles_conf2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/gnss/agps_profiles_conf2.xml
 
+# A16-D7: android.hardware.gnss-V1-ndk_platform 在 A16 已 VNDK 化（vndk_prebuilt_shared，
+# LOCAL_MODULE 带 .vndk.31/32 后缀且 UNINSTALLABLE），不能作为 PRODUCT_PACKAGES 基名引用；
+# 该 .so 已由 vendor/xiaomi/cannon/cannon-vendor.mk 从 proprietary COPY 到 vendor/lib(64)。
+# 故从 PRODUCT_PACKAGES 移除，仅保留 gnss@2.1.vendor 接口。
 PRODUCT_PACKAGES += \
-    android.hardware.gnss@2.1.vendor \
-    android.hardware.gnss-V1-ndk_platform.vendor
+    android.hardware.gnss@2.1.vendor
 
 # Public libraries
 PRODUCT_COPY_FILES += \
@@ -401,7 +419,7 @@ PRODUCT_PACKAGES += \
     init.connectivity.rc \
     init.modem.rc \
     init.mt6853.rc \
-    init.mt6853.usb.rc \
+    init.mt6853.usb.cannon.rc \
     init.project.rc \
     init.sensor_2_0.rc \
     ueventd.mtk.rc
@@ -416,6 +434,15 @@ PRODUCT_COMPATIBLE_PROPERTY_OVERRIDE := true
 
 # Shipping API level
 PRODUCT_SHIPPING_API_LEVEL := 34
+
+# A16-D14: 老 vendor(A12 blob) 上新 Android。设备服务的旧 HIDL HAL（fingerprint@2.3 /
+# cas@1.2 / drm@1.4 / usb@1.3 / sensors@2.1 ...）在 A16 的 framework compatibility
+# matrix(FCM v8) 里被标为 deprecated，check_vintf_compatible 判为 ERROR("should not be
+# served")；内核 4.14 也低于 FCM 要求的最低 LTS(5.15)。A16 已把
+# PRODUCT_ENFORCE_VINTF_MANIFEST 硬编码 true 且废弃 _OVERRIDE，无法用产品变量关闭。
+# 故由 build/make 侧识别此开关，仅跳过 check_vintf_compatible（保留 check_vintf_vendor
+# 的清单合法性/重复 FqInstance 检查）。A15 当初是整体关闭 VINTF 强制，实测可正常启动。
+CANNON_SKIP_VINTF_COMPAT := true
 
 # Seccomp policy
 PRODUCT_COPY_FILES += \
@@ -436,11 +463,25 @@ PRODUCT_PACKAGES += \
     libshim_cpp_verbose_abort \
     libshim_sensors \
     libshim_cannon_vendor \
-    libshim_cannon_system
+    libshim_cannon_system \
+    libnetutils_vendor_dep
 
 # GPS
 PRODUCT_PACKAGES += \
     libcurl
+
+# cannon A16（老 vendor 上新系统）：SurfaceFlinger / 媒体依赖闭包。
+# A16 已移除 VNDK，下列库是 system 私有库，vendor 命名空间的 SF/Mali/media HAL 找不到它们
+# → libgralloc_extra→libGLES_mali dlopen 失败 → SurfaceFlinger EGL null → SIGSEGV 黑屏。
+# 之前是"手工注入 vendor 镜像"（每次裸 m vendorimage 都会丢 → 黑屏回归）。
+# 这里强制它们参与构建（保证 $(TARGET_OUT) 有产物）；真正拷进 /vendor 由
+#   scripts/a16_assemble_vendor.sh 在 m vendorimage 之后自动完成
+#   （注意：不能在本文件用 PRODUCT_COPY_FILES + $(TARGET_OUT)——解析期 TARGET_OUT 为空，
+#    实测会展开成 /lib64/xxx，无效）。
+PRODUCT_PACKAGES += \
+    libunwindstack \
+    libutilscallstack \
+    liblzma
 
 # Thermal
 PRODUCT_PACKAGES += \

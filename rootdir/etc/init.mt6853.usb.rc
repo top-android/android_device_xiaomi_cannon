@@ -48,9 +48,19 @@ on post-fs
     mount functionfs mtp /dev/usb-ffs/mtp rmode=0770,fmode=0660,uid=1024,gid=1024,no_disconnect=1
     mount functionfs ptp /dev/usb-ffs/ptp rmode=0770,fmode=0660,uid=1024,gid=1024,no_disconnect=1
 
+# A16 old-vendor：framework/HAL 无法在运行时把 sys.usb.config 选成 adb（A12 HIDL usb HAL
+# 驱动不了 A16 framework）。在 post-fs-data（/data 已挂、persist 可写、且早于 boot 触发）
+# 落 persist 默认 adb，供 init.usb.rc 的 `on boot && property:persist.sys.usb.config=*`
+# 读回 → setprop sys.usb.config adb → init.usb.configfs.rc:17 `start adbd`。
+# 这是声明式恢复默认，非运行时探针服务。
+on post-fs-data
+    setprop persist.sys.usb.config adb
+
 on boot
     setprop sys.usb.configfs 1
     setprop sys.usb.ffs.aio_compat 0
+    # 直接推 configfs 选 adb（与上面 post-fs-data 的 persist 双保险，不依赖 init.usb.rc 时序）
+    setprop sys.usb.config adb
     setprop vendor.usb.controller "musb-hdrc"
     setprop vendor.usb.acm_cnt 0
     setprop vendor.usb.acm_port0 ""
@@ -118,7 +128,7 @@ on charger
     setprop sys.usb.config adb
 
 on property:dev.bootcomplete=1
-    write /config/usb_gadget/g1/strings/0x409/product ${ro.product.marketname}
+    write /config/usb_gadget/g1/strings/0x409/product ${ro.product.model}
 
 
 ### more command at init.usb.configfs.rc ###
