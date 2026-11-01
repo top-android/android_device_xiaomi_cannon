@@ -16,8 +16,6 @@
 /vendor/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.3-service\.xiaomi u:object_r:hal_fingerprint_default_exec:s0
 
 # NFC
-/dev/nq-nci                                                    u:object_r:nfc_device:s0
-/dev/p73                                                       u:object_r:nfc_device:s0
 /vendor/bin/hw/vendor\.nxp\.hardware\.nfc@1\.2-service         u:object_r:hal_nfc_default_exec:s0
 
 # Lights
@@ -48,3 +46,11 @@
 # → mapper dlopen 失败 → "gralloc-mapper is missing" → SF SIGABRT → 卡第一屏(D1)。
 # 与 mapper impl 同标签即可被同一批允许读 same_process_hal_file 的进程读取。
 /(vendor|system/vendor)/lib(64)?/libshim_cpp_verbose_abort\.so   u:object_r:same_process_hal_file:s0
+
+# A16 补丁 vendor 库（a16_assemble_vendor.sh 从 system 暂存区注入）——EGL/gralloc 依赖链
+# surfaceflinger/zygote 经 libGLES_meow.so → libGLES_mali.so → libgralloc_extra.so 这条链在
+# sphal 命名空间直接 dlopen libutilscallstack / libunwindstack / liblzma，必须标 same_process_hal_file。
+# 【注意】这三条的 same_process_hal_file 标签已由上游 system/sepolicy/vendor/file_contexts
+# （205/208/210 行）声明，此处不得再重复声明——重复会在合并 file_contexts.device.tmp 时报
+# "Multiple same specifications for ...libutilscallstack/.so" 导致 m systemimage 失败。
+# 注入脚本 a16_assemble_vendor.sh 里 inject() 的 chcon 标签仍须保持 same_process_hal_file。

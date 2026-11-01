@@ -26,8 +26,15 @@ prebuilt_etc {
     vendor: true,
 }
 
+// USB：A16 hardware/mediatek 会用 target_board_platform_prebuilt_etc 把 MTK 通用版
+// init.mediatek.usb.rc 装成同一目标路径 /vendor/etc/init/hw/init.mt6853.usb.rc（439 行，
+// 不含 setprop config adb，靠 USB gadget HAL），顶掉 device 树这份（1009 行，on post-fs
+// 自设 configfs=1 + config=adb → 开机自动 adb）。
+// 干净修法：把 device 树这份装成唯一文件名 init.mt6853.usb.cannon.rc，并在 init.mt6853.rc
+// 里把它 import 进来；MTK 通用版虽仍装到 init.mt6853.usb.rc 但无人 import、不执行。
 prebuilt_etc {
-    name: "init.mt6853.usb.rc",
+    name: "init.mt6853.usb.cannon.rc",
+    filename: "init.mt6853.usb.cannon.rc",
     src: "etc/init.mt6853.usb.rc",
     sub_dir: "init/hw",
     vendor: true,

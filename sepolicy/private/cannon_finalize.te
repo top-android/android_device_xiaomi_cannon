@@ -1,0 +1,7 @@
+# cannon A16 enforcing 收尾（apply_a16_enforcing_avc_finalize.sh 维护，勿手改）。
+# init 在 enforcing 下 ptrace 自身（capability=19）。AOSP domain.te neverallow
+#   neverallow { domain -vold -dumpstate -system_server ... } self:global_capability_class_set sys_ptrace;
+# 例外列表不含 init => 不能 allow（会编不过）。该操作无害（enforcing 已能开机），
+# 用 dontaudit 仅消除 audit 噪声（dontaudit 不受 neverallow 约束）。
+
+dontaudit init self:capability sys_ptrace;

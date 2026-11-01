@@ -116,6 +116,11 @@ function blob_fixup() {
     vendor/bin/hw/android.hardware.media.c2@1.2-mediatek)
         "${PATCHELF}" --add-needed "libstagefright_foundation-v33.so" "${2}"
         ;;
+    # A16 media.c2 经 libcodec2_vndk 要 android::GraphicBufferMapper::lock(旧签名)，
+    # A16 libui 已删；device 树 libshim_cannon_vendor.so 定义了它 → 烤进 NEEDED。
+    vendor/lib/libcodec2_vndk.so|vendor/lib64/libcodec2_vndk.so)
+        "${PATCHELF}" --add-needed "libshim_cannon_vendor.so" "${2}"
+        ;;
     vendor/etc/init/vendor.mediatek.hardware.mtkpower@1.0-service.rc)
         echo "$(cat ${2}) input" > "${2}"
         ;;
