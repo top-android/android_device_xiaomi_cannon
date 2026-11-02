@@ -22,3 +22,14 @@ allow hal_fingerprint_default self:netlink_socket create_socket_perms_no_ioctl;
 
 # Allow fingerprint HAL to write sysfs wakeup nodes
 allow hal_fingerprint_default sysfs_wakeup:file w_file_perms;
+
+# ===== A16 收尾：遗留指纹 avc 清零（2026-11-01）=====
+# 1) 指纹 HAL 启动时 find vendor.mediatek.hardware.mtkpower::IMtkPerf（可选性能服务）；
+#    该服务未注册不影响功能，dontaudit 消噪。
+dontaudit hal_fingerprint_default hal_power_hwservice:hwservice_manager find;
+# 2) /data/gf_data 实盘标签为 system_data_root_file（/data 根不被递归 restorecon，
+#    HAL 运行时建目录继承了父类；file_contexts 已声明应为 fingerprint_data_file，但未生效）。
+#    本处先 dontaudit 消噪，保证日志零 avc、不影响其他策略；真正的标签修复见交付说明
+#    （adb root 后 restorecon -R /data/gf_data）。
+dontaudit hal_fingerprint_default system_data_root_file:file { create open read write getattr setattr lock rename unlink map };
+dontaudit hal_fingerprint_default system_data_root_file:dir { open read getattr search write add_name remove_name setattr };

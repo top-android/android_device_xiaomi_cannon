@@ -13,3 +13,26 @@ allow vendor_init nfc_data_vendor_file:dir { r_dir_perms create_dir_perms };
 allow vendor_init proc_sched_stune:file w_file_perms;
 
 rw_dir_file(vendor_init, sysfs_leds)
+
+# ===== A16 收尾：遗留 property_service set avc 清零（2026-11-01）=====
+# 开机 3.08s vendor_init 尝试 setprop 7 个属性被拒（非致命，属性落空）。
+# 语义（system/sepolicy/public/te_macros）：
+#  - vendor_internal_prop  neverallow { domain -init -vendor_init } set  => vendor_init 可 set（补 allow）
+#  - vendor_restricted_prop neverallow { coredomain -init } set        => vendor_init 非 coredomain 可 set（补 allow）
+#  - system_internal_prop  neverallow { domain -coredomain } set       => vendor_init 非 coredomain 不可 set
+#    （system_mtk_cta_set_prop / system_mtk_persist_vendor_vzw_device_type_prop / charger_prop / default_prop
+#     均为 coredomain 读取的系统属性，重映射为 vendor 类型会触发「coredomain 读 vendor prop」neverallow，
+#     破坏读侧，故只能 dontaudit 消噪；这些属性本就不生效，行为维持现状）
+# dontaudit 不受 neverallow 约束，仅抑制审计日志，不改变放行结果。
+
+# 可正确放行：让 VoWiFi / telephony addon policy 真正生效
+allow vendor_init vendor_mtk_wfc_serv_prop:property_service set;
+allow vendor_init vendor_mtk_telephony_addon_prop:property_service set;
+
+# 架构上不可 set（system_internal_prop）：消噪，不改变现状
+dontaudit vendor_init default_prop:property_service set;                                  # ro.mtk_cam_stereo_camera_support, ro.telephony.sim.count
+dontaudit vendor_init charger_prop:property_service set;                                  # ro.charger.enable_suspend
+
+# 注：system_mtk_persist_vendor_vzw_device_type_prop / system_mtk_cta_set_prop 属
+#     SYSTEM_EXT_PRIVATE 类型，vendor 侧不可引用；其 dontaudit 见
+#     device/xiaomi/cannon/sepolicy/private/cannon_a16_residual.te。
