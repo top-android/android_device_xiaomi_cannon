@@ -1,0 +1,10 @@
+# cannon A16 收尾：SYSTEM_EXT_PRIVATE 侧残余 property_service set avc 清零（2026-11-01）。
+# system_mtk_cta_set_prop / system_mtk_persist_vendor_vzw_device_type_prop 定义在
+# device/mediatek/sepolicy_vndr/base/private（SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS），
+# 属 system_internal_prop：neverallow { domain -coredomain } :property_service set 禁止
+# vendor_init(non-coredomain) set；且二者为 coredomain 读取的系统属性，重映射为 vendor
+# 类型会触发「coredomain 读 vendor prop」neverallow，故只能 dontaudit 消噪。
+# dontaudit 不受 neverallow 约束，仅抑制审计日志、不改变放行结果（属性本就不生效）。
+
+dontaudit vendor_init system_mtk_persist_vendor_vzw_device_type_prop:property_service set;  # persist.vendor.vzw_device_type
+dontaudit vendor_init system_mtk_cta_set_prop:property_service set;                        # ro.vendor.mtk_cta_set
