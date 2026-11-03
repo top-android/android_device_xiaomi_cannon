@@ -292,19 +292,26 @@ PRODUCT_PACKAGES += \
 PRODUCT_ENFORCE_RRO_TARGETS := *
 
 # Mediatek
-# 2026-10-27 IMS：mediatek-telephony-common（boot jar）里直接引用
-# mediatek-ims-base 的类（com/mediatek/ims/internal/IMtkImsService、MtkImsManager…），
-# 但 mediatek-ims-base/-common 之前只装进 /system/framework、没进 boot classpath，
-# 运行到 IMS 路径就 NoClassDefFound。原厂 bootclasspath.pb 里这三个都在。
-PRODUCT_BOOT_JARS += \
-    mediatek-common \
-    mediatek-framework \
-    mediatek-services \
-    mediatek-telecom-common \
-    mediatek-telephony-common \
-    mediatek-telephony-base \
-    mediatek-ims-common \
-    mediatek-ims-base
+# [cannon][A17] A16 期(2026-10-27)曾把下面 8 个 vendor jar 放进 PRODUCT_BOOT_JARS 修 IMS
+# NoClassDefFound。但 A17 的 AOSP telephony 已重构为 data 包新架构：删除了
+# dataconnection.{DataConnection,DcTracker,ApnContext,ApnSettingUtils,TelephonyNetworkFactory…}、
+# cdma.CdmaMmiCode、cat.RilMessage、SubscriptionController 等，且 GsmMmiCode/GsmSMSDispatcher/
+# ImsPhoneMmiCode/uicc.*FileHandler 等被改为 final。vendor blob 里大量 MtkXxx extends 这些
+# 旧/final 类 → 编入 boot image 会被 dex2oat --abort-on-hard-verifier-error 硬失败
+# (首个报错 MtkGsmMmiCode extends final GsmMmiCode；boot-apache-xml.art 等一并 fail)。
+# 实测(2026-11-03)：A17 所有 AOSP boot jar 对 com/mediatek 引用数=0(连反射字符串都 0)，
+# 说明 A17 framework 不依赖这些 jar；它们仍由 cannon-vendor.mk PRODUCT_PACKAGES 装到
+# /system/framework(dex_import，dex_preopt 已在 Android.bp 关闭)。故 A17 不再放 boot classpath。
+# [待验证] 运行期若 MTK IMS/telephony 服务需要某 mediatek 类，再按需单独加载处理。
+# PRODUCT_BOOT_JARS += \
+#     mediatek-common \
+#     mediatek-framework \
+#     mediatek-services \
+#     mediatek-telecom-common \
+#     mediatek-telephony-common \
+#     mediatek-telephony-base \
+#     mediatek-ims-common \
+#     mediatek-ims-base
 
 # Power
 PRODUCT_COPY_FILES += \
