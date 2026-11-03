@@ -142,13 +142,16 @@ PRODUCT_PACKAGES += \
     libxml2.vendor
 
 # ConsumerIr
-PRODUCT_PACKAGES += \
-    android.hardware.ir@1.0-impl:64 \
-    android.hardware.ir@1.0-service
+# [cannon][A17] A17 已移除 HIDL android.hardware.ir@1.0（hardware/interfaces/ir 改为 AIDL-only）；
+# cannon 无 IR 发射硬件，不再声明该 HIDL 包（否则 kati 报 non-existent module 直接 fail）。
+# PRODUCT_PACKAGES += \
+#     android.hardware.ir@1.0-impl:64 \
+#     android.hardware.ir@1.0-service
 
 # ConfigStore
-PRODUCT_PACKAGES += \
-    disable_configstore
+# [cannon][A17] A17 已无 disable_configstore 模块（旧 A15/A16 用于禁用 ConfigStore 的占位包）。
+# PRODUCT_PACKAGES += \
+#     disable_configstore
 
 # Display
 # A16-D7: memtrack 源码 HAL 在 A16 更名为 android.hardware.memtrack-service.mediatek
