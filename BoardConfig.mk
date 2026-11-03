@@ -56,6 +56,11 @@ BOARD_MKBOOTIMG_ARGS += --tags_offset $(BOARD_KERNEL_TAGS_OFFSET)
 BOARD_MKBOOTIMG_ARGS += --dtb $(BOARD_PREBUILT_DTBIMAGE)
 TARGET_KERNEL_CONFIG := cannon_defconfig
 TARGET_KERNEL_SOURCE := kernel/xiaomi/cannon
+# A17 树内 kernel.mk 引用 $(KERNEL_CROSS_COMPILE) 但该 Lineage 树未定义它（A15/A16
+# 走独立内核仓不经过此路径）。留空会让 clang 不带 --target，vDSO 退化成主机 x86_64
+# 而报 “unsupported option '-ffixed-x18' for target 'x86_64'”。必须用 gnu 三元组：
+# aarch64-linux-android- 会触发 scripts/clang-android.sh 的 __ANDROID__ 报错。
+KERNEL_CROSS_COMPILE := CROSS_COMPILE=aarch64-linux-gnu-
 
 # Partitions
 BOARD_FLASH_BLOCK_SIZE := 131072 # (BOARD_KERNEL_PAGESIZE * 64)
