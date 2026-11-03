@@ -301,7 +301,7 @@ PRODUCT_ENFORCE_RRO_TARGETS := *
 # (首个报错 MtkGsmMmiCode extends final GsmMmiCode；boot-apache-xml.art 等一并 fail)。
 # 实测(2026-11-03)：A17 所有 AOSP boot jar 对 com/mediatek 引用数=0(连反射字符串都 0)，
 # 说明 A17 framework 不依赖这些 jar；它们仍由 cannon-vendor.mk PRODUCT_PACKAGES 装到
-# /system/framework(dex_import，dex_preopt 已在 Android.bp 关闭)。故 A17 不再放 boot classpath。
+# /system/framework(dex_import；其 dexpreopt 由下方 PRODUCT_DEX_PREOPT_MODULE_CONFIGS=disable 关闭)。故 A17 不再放 boot classpath。
 # [待验证] 运行期若 MTK IMS/telephony 服务需要某 mediatek 类，再按需单独加载处理。
 # PRODUCT_BOOT_JARS += \
 #     mediatek-common \
@@ -312,6 +312,21 @@ PRODUCT_ENFORCE_RRO_TARGETS := *
 #     mediatek-telephony-base \
 #     mediatek-ims-common \
 #     mediatek-ims-base
+
+# [cannon][A17] vendor mediatek/hotword/nxp 等 dex_import 与 A17 重构后的 AOSP 类不兼容
+# (多类 final/删除，首个 MtkGsmMmiCode extends final GsmMmiCode)，被单独 dexpreopt 时
+# dex2oat --abort-on-hard-verifier-error 硬验证失败。用官方产品变量把模块级 dexpreopt 关掉：
+# PRODUCT_DEX_PREOPT_MODULE_CONFIGS 的 <模块>=disable 经 build/make/core/product_config.mk:468
+# 汇入 DEXPREOPT_DISABLED_MODULES → dex_preopt_config.mk:87 DisablePreoptModules →
+# build/soong/dexpreopt/dexpreopt.go:122 按模块名跳过 dex2oat(不再产/装 odex)。
+# 运行期 jar 仍由 cannon-vendor.mk 装到 /system/framework，仅首次加载稍慢。
+# 注：dex_import 模块类型不支持 dex_preopt 属性(会报 unrecognized property)，故必须走这里。
+$(call add-product-dex-preopt-module-config, \
+    mediatek-common mediatek-framework mediatek-services \
+    mediatek-telecom-common mediatek-telephony-common mediatek-telephony-base \
+    mediatek-ims-base mediatek-ims-common mediatek-ims-extension-plugin \
+    mediatek-ims-legacy mediatek-wfo-legacy \
+    com.nxp.sems com.android.hotwordenrollment.common.util, disable)
 
 # Power
 PRODUCT_COPY_FILES += \
