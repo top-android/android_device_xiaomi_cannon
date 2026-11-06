@@ -154,6 +154,12 @@ PRODUCT_PACKAGES += \
 #     disable_configstore
 
 # Display
+# [cannon][A17] MT6853 只有 legacy ION，内核没有 dma-heap（CONFIG_ION=y，无 CONFIG_DMABUF_HEAPS）。
+# 不设这个 soong 变量时 libdmabufheap 编出来不带 /dev/ion 回退，vendor 的 gralloc4 分配必然失败
+# （DMABUFHEAPS: Could not open DMA-BUF heap named: mtk_mm/system → allocate failed with 2），
+# 表现为 SurfaceFlinger 拿到 0x0 buffer 后 abort、卡第一屏。
+$(call soong_config_set_bool,libion,legacy_impl,true)
+
 # A16-D7: memtrack 源码 HAL 在 A16 更名为 android.hardware.memtrack-service.mediatek
 # （A15 为 -mali 后缀；A16 的 memtrack 源码已含 MemtrackDeviceMali.cpp，等价）。
 PRODUCT_PACKAGES += \
@@ -593,6 +599,9 @@ PRODUCT_SOONG_NAMESPACES += \
 
 # Inherit the proprietary files
 $(call inherit-product, vendor/xiaomi/cannon/cannon-vendor.mk)
+
+# [cannon][A17] adb 免 RSA 认证（调试便利；量产前应改回 1）
+PRODUCT_SYSTEM_EXT_PROPERTIES += ro.adb.secure=0
 
 # 系统更新（Updater）：指向自己的元数据仓库
 # Updater 会把 {device} 换成 ro.product.device，本机是 cannon → cannon.json
