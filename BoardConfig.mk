@@ -151,6 +151,10 @@ TARGET_FS_CONFIG_GEN += $(DEVICE_PATH)/configs/fs_config_vendor.fs
 
 # Sepolicy
 include device/mediatek/sepolicy_vndr/SEPolicy.mk
+# MT6853 只有 legacy ION，HAL 需要访问 /dev/ion（尤其 hal_graphics_allocator，否则 gralloc
+# 分配 buffer 全部失败 → SurfaceFlinger abort 卡第一屏）。该目录提供
+#   allow hal_graphics_allocator ion_device:chr_file r_file_perms;
+include device/lineage/sepolicy/libion/sepolicy.mk
 BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
 SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/private
 
