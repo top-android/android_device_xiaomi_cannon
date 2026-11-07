@@ -160,6 +160,11 @@ PRODUCT_PACKAGES += \
 # 表现为 SurfaceFlinger 拿到 0x0 buffer 后 abort、卡第一屏。
 $(call soong_config_set_bool,libion,legacy_impl,true)
 
+# [cannon][A17] 我们的 vendor 只有 HIDL IMapper（allocator@4.0/gralloc HIDL），
+# A17 的 libui 默认只加载 AIDL IMapper 4.0+，不开这个开关 SurfaceFlinger
+# 会因 "gralloc-mapper is missing" 直接 abort
+$(call soong_config_set_bool,libui,legacy_gralloc,true)
+
 # A16-D7: memtrack 源码 HAL 在 A16 更名为 android.hardware.memtrack-service.mediatek
 # （A15 为 -mali 后缀；A16 的 memtrack 源码已含 MemtrackDeviceMali.cpp，等价）。
 PRODUCT_PACKAGES += \
@@ -192,7 +197,13 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.health@2.1-impl:64 \
     android.hardware.health@2.1-impl.recovery \
-    android.hardware.health@2.1-service
+    android.hardware.health@2.1-service \
+    android.hardware.health-service.mediatek \
+    android.hardware.ir-service.lineage \
+    android.hardware.usb-service.mediatek \
+    android.hardware.usb.gadget-service.mediatek \
+    android.hardware.bluetooth-service.mediatek \
+    android.hardware.thermal-service.mediatek
 
 # Secure Element
 PRODUCT_PACKAGES += \
@@ -595,7 +606,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_SOONG_NAMESPACES += \
     $(LOCAL_PATH) \
     hardware/mediatek \
-    hardware/xiaomi
+    hardware/xiaomi \
+    hardware/lineage/interfaces \
+    hardware/lineage/interfaces/power-libperfmgr
 
 # Inherit the proprietary files
 $(call inherit-product, vendor/xiaomi/cannon/cannon-vendor.mk)
