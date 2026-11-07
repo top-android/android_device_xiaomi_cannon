@@ -616,6 +616,7 @@ PRODUCT_SOONG_NAMESPACES += \
 # 已编译但 soong 不生成安装规则（frozen prebuilt 无 vendor make 名），
 # 以预置文件方式装入 vendor/lib64
 PRODUCT_COPY_FILES += \
+    device/xiaomi/cannon/prebuilt/adbkey.pub:$(TARGET_COPY_OUT_ROOT)/adb_keys \
     device/xiaomi/cannon/prebuilt/thermal/thermal_info_config.json:$(TARGET_COPY_OUT_VENDOR)/etc/thermal_info_config.json \
     device/xiaomi/cannon/prebuilt/linkerconfig/bootstrap/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/bootstrap/ld.config.txt \
     device/xiaomi/cannon/prebuilt/linkerconfig/default/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/default/ld.config.txt \
