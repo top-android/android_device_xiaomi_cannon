@@ -608,7 +608,16 @@ PRODUCT_SOONG_NAMESPACES += \
     hardware/mediatek \
     hardware/xiaomi \
     hardware/lineage/interfaces \
-    hardware/lineage/interfaces/power-libperfmgr
+    hardware/lineage/interfaces/power-libperfmgr \
+    hardware/google/interfaces \
+    hardware/google/pixel
+
+# [cannon][A17] thermal-service.mediatek 依赖的 Pixel 扩展库：vendor 变体
+# 已编译但 soong 不生成安装规则（frozen prebuilt 无 vendor make 名），
+# 以预置文件方式装入 vendor/lib64
+PRODUCT_COPY_FILES += \
+    device/xiaomi/cannon/prebuilt/lib64/pixel-power-ext-V1-ndk.so:$(TARGET_COPY_OUT_VENDOR)/lib64/pixel-power-ext-V1-ndk.so \
+    device/xiaomi/cannon/prebuilt/lib64/pixelatoms-cpp.so:$(TARGET_COPY_OUT_VENDOR)/lib64/pixelatoms-cpp.so
 
 # Inherit the proprietary files
 $(call inherit-product, vendor/xiaomi/cannon/cannon-vendor.mk)
