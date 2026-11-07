@@ -654,3 +654,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # 保留 AOSP LatinIME 作为兜底，默认输入法由 InputMethodInfoUtils 自动选中 Gboard
 PRODUCT_PACKAGES += \
     Gboard
+
+# [cannon] 端口期恢复标准 userdebug（ro.debuggable=1）：Lineage 默认在 userdebug
+# 关调试导致 adb root 不可用。发布正式版时移除本行。
+PRODUCT_NOT_DEBUGGABLE_IN_USERDEBUG := false
