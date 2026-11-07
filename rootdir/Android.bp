@@ -65,6 +65,8 @@ prebuilt_etc {
     name: "ueventd.mtk.rc",
     filename: "ueventd.rc",
     src: "etc/ueventd.mtk.rc",
+    // [cannon][A17] prebuilt_etc + vendor:true 默认装到 /vendor/etc/ueventd.rc，
+    // 正是 A17 ueventd 会 import 的路径
     vendor: true,
 }
 
