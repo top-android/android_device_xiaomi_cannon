@@ -11,6 +11,9 @@
 # 本脚本改在 build_image **之前**运行：
 #   1) 把 system staging 的库直接拷进 vendor staging（$P/vendor）；
 #   2) 就地对 vendor blob（libutils / libhidlbase / libcodec2_vndk）打二进制补丁；
+#   2b) libcutils.so 用 system 版覆盖 blob：V13 blob 缺 uevent_create_socket 等
+#       新符号，health-service.mediatek(AIDL) 链接失败 → system_server 卡死在
+#       BatteryService 等 AIDL IHealth。
 #   3) 把新增文件的相对路径追加进 file_list.txt；
 #   4) 幂等补 /etc/vintf/manifest.xml 的 camera.provider 声明。
 #   随后 build_image 一并打包，并由 file_contexts.bin **自动赋予正确 SELinux 标签**
@@ -36,6 +39,14 @@ PATCHELF="$(command -v patchelf || true)"
 [ -d "$STG" ] || { echo "[preasm] ❌ staging 不存在: $STG"; exit 1; }
 [ -f "$FL" ]  || { echo "[preasm] ❌ file_list 不存在: $FL"; exit 1; }
 
+# [cannon][A17] 清除 V13 残留的 vendor linker.config.pb：其 provideLibs
+# (libcamera_metadata.so) 与 system provideLibs 在 [system] 段造成
+# "duplicate provider" → linkerconfig LOG(FATAL) → 开机无 ld.config →
+# 全部 APEX 库加载失败。V14 上游已无此文件。
+rm -f "$P/vendor/etc/linker.config.pb"
+sed -i "/linker.config.pb/d" "$FL"
+echo "[preasm] 已清除 V13 残留 linker.config.pb（staging+file_list）"
+
 MISS=0
 say(){ echo "[preasm] $*"; }
 WORK="$(mktemp -d /tmp/preasm.XXXXXX)" || { echo "mktemp 失败"; exit 1; }
@@ -60,7 +71,8 @@ put_sys(){
 for b in libcurl.so libunwindstack.so libutilscallstack.so liblzma.so \
          libhidlmemory.so android.hardware.media.c2@1.0.so \
          android.hardware.media.c2@1.1.so android.hardware.media.c2@1.2.so \
-         libc++.so libcamera_metadata.so libexif.so libpng.so libexpat.so; do
+         libc++.so libcamera_metadata.so libexif.so libpng.so libexpat.so \
+         libcutils.so; do
   put_sys "$b"
 done
 

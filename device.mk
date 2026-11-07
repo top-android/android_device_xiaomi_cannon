@@ -616,6 +616,24 @@ PRODUCT_SOONG_NAMESPACES += \
 # 已编译但 soong 不生成安装规则（frozen prebuilt 无 vendor make 名），
 # 以预置文件方式装入 vendor/lib64
 PRODUCT_COPY_FILES += \
+    device/xiaomi/cannon/prebuilt/linkerconfig/bootstrap/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/bootstrap/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/default/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/default/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/apex.libraries.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/apex.libraries.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.adbd/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.adbd/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.art/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.art/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.configinfrastructure/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.configinfrastructure/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.conscrypt/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.conscrypt/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.media/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.media/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.media.swcodec/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.media.swcodec/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.mediaprovider/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.mediaprovider/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.os.statsd/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.os.statsd/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.profiling/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.profiling/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.runtime/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.runtime/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.sdkext/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.sdkext/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.tethering/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.tethering/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.uprobestats/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.uprobestats/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.webapp/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.webapp/ld.config.txt \
+    device/xiaomi/cannon/prebuilt/linkerconfig/com.android.wifi/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.wifi/ld.config.txt \
     device/xiaomi/cannon/prebuilt/lib64/pixel-power-ext-V1-ndk.so:$(TARGET_COPY_OUT_VENDOR)/lib64/pixel-power-ext-V1-ndk.so \
     device/xiaomi/cannon/prebuilt/lib64/pixelatoms-cpp.so:$(TARGET_COPY_OUT_VENDOR)/lib64/pixelatoms-cpp.so
 
