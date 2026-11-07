@@ -643,7 +643,6 @@ PRODUCT_COPY_FILES += \
 $(call inherit-product, vendor/xiaomi/cannon/cannon-vendor.mk)
 
 # [cannon][A17] adb 免 RSA 认证（调试便利；量产前应改回 1）
-PRODUCT_SYSTEM_EXT_PROPERTIES += ro.adb.secure=0
 
 # 系统更新（Updater）：指向自己的元数据仓库
 # Updater 会把 {device} 换成 ro.product.device，本机是 cannon → cannon.json
