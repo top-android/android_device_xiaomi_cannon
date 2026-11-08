@@ -1,0 +1,4 @@
+# [cannon] AW8622 震动接口位于 sysfs（/sys/devices/platform/haptic_pwm/*，
+# compatible awinic,aw8622 PWM 模式），HAL 需要写 sysfs 属性文件。
+allow hal_vibrator_default sysfs:dir search;
+allow hal_vibrator_default sysfs:file { open read write append getattr };
