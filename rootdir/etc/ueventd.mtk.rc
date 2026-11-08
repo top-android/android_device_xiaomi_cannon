@@ -178,3 +178,9 @@
 /dev/ttyACM0              0660   radio      radio
 
 /dev/xlog                 0660   system     audio
+
+# [cannon] AW8622 震动接口权限（HAL user=system）
+/sys/devices/platform/haptic_pwm/activate 0660 system system
+/sys/devices/platform/haptic_pwm/duration 0660 system system
+/sys/devices/platform/haptic_pwm/index 0660 system system
+/sys/devices/platform/haptic_pwm/hwen 0660 system system
