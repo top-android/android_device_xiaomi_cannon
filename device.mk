@@ -322,11 +322,18 @@ PRODUCT_ENFORCE_RRO_TARGETS := *
 # [待验证] 运行期若 MTK IMS/telephony 服务需要某 mediatek 类，再按需单独加载处理。
 # [cannon][A17][2026-11-08] 验证时刻到了：ImsService 运行期 NoClassDefFound
 # OperatorCustomizationFactoryLoader（mediatek-common）。按上注思路用【最小集】：
-# 只放 IMS 依赖的 2 个 jar，不含 telephony/telecom 系（MtkXxx extends final 的
+# 只放 IMS 依赖的 jar，不含 telephony/telecom 系（MtkXxx extends final 的
 # dex2oat 硬验证雷区）。若 boot image 编译报 verifier 错，按报错逐个剔除。
+# [cannon][A17][2026-11-08-2] 最小集漏了 mediatek-ims-base：ImsApp.onCreate 引用
+# com.mediatek.ims.MtkImsService，其父类 com.mediatek.ims.internal.IMtkImsService$Stub
+# 只在 ims-base.jar 里（APK 无此定义），classloader 链不上父类 → 启动即崩无限重启
+# (ART FilterDexFileCaughtExceptions 过滤真实异常，谎报类本身找不到)。
+# 已预检：ims-base 59 类的外部父类全为 A17 存在框架类(ImsCallSession 非 final)，
+# APK 全部 mediatek 父类引用加上 ims-base 后缺失数=0，无 extends-final 雷区。
 PRODUCT_BOOT_JARS += \
     mediatek-common \
     mediatek-ims-common \
+    mediatek-ims-base \
     mediatek-telephony-base
 # PRODUCT_BOOT_JARS += \
 #     mediatek-common \
