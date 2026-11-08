@@ -2,6 +2,9 @@ typeattribute vendor_init data_between_core_and_vendor_violators;
 
 # Allow vendor_init to read vts_status_prop
 get_prop(vendor_init, vts_status_prop)
+# [cannon][A17][2026-11-08] AIDL 指纹 sysprop（persist.vendor.fingerprint.*）由 vendor_init
+# 加载 /vendor/build.prop 时设置，需 set_prop 权限，否则属性落不了地、HAL 读到空值 FATAL
+set_prop(vendor_init, vendor_fingerprint_prop)
 
 # Allow vendor_init to create fingerprint dirs
 allow vendor_init fingerprint_data_file:dir { rw_dir_perms relabelto setattr };
