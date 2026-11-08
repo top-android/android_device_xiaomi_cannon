@@ -424,8 +424,14 @@ PRODUCT_PACKAGES += \
     FMRadio
 
 # Fingerprint
+# [cannon][A17][2026-11-08] HIDL 2.3 → AIDL V4（对齐 Niclan cannong 实测可跑配置）：
+# 服务换源码模块 android.hardware.biometrics.fingerprint-service.xiaomi
+# （hardware/xiaomi/aidl/fingerprint，自带 init_rc + vintf fragment，链 fingerprint-V4-ndk）。
+# HIDL 服务 blob 的 copy 已从 cannon-vendor.mk 删除（曾与编译产物同路径互相覆盖）。
+# goodix 遗留库不变（cap@2.1/libgoodixhwfingerprint/fingerprint.goodix.default.so），
+# sepolicy 域不变（同 hal_fingerprint_default）。
 PRODUCT_PACKAGES += \
-    android.hardware.biometrics.fingerprint@2.3-service.xiaomi
+    android.hardware.biometrics.fingerprint-service.xiaomi
 
 # Keylayouts
 PRODUCT_COPY_FILES += \

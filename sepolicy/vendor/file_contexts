@@ -13,7 +13,9 @@
 /data/vendor/goodix(/.*)?                          u:object_r:vendor_fingerprint_data_file:s0
 /data/gf_data(/.*)?                                u:object_r:fingerprint_data_file:s0
 
-/vendor/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.3-service\.xiaomi u:object_r:hal_fingerprint_default_exec:s0
+# [cannon][A17][2026-11-08] 指纹服务 HIDL@2.3 → AIDL（hardware/xiaomi/aidl/fingerprint
+# 源码模块），标签路径同步替换，域仍为 hal_fingerprint_default
+/vendor/bin/hw/android\.hardware\.biometrics\.fingerprint-service\.xiaomi u:object_r:hal_fingerprint_default_exec:s0
 
 # NFC
 /vendor/bin/hw/vendor\.nxp\.hardware\.nfc@1\.2-service         u:object_r:hal_nfc_default_exec:s0
