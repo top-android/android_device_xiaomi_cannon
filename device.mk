@@ -327,14 +327,14 @@ PRODUCT_ENFORCE_RRO_TARGETS := *
 PRODUCT_BOOT_JARS += \
     mediatek-common \
     mediatek-ims-common \
-    mediatek-telephony-common \
+    mediatek-telephony-base \
     mediatek-telephony-base
 # PRODUCT_BOOT_JARS += \
 #     mediatek-common \
 #     mediatek-framework \
 #     mediatek-services \
 #     mediatek-telecom-common \
-#     mediatek-telephony-common \
+#     mediatek-telephony-base \
 #     mediatek-telephony-base \
 #     mediatek-ims-common \
 #     mediatek-ims-base
