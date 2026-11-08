@@ -1017,3 +1017,15 @@ on property:vendor.usb.testmode=3
 on property:vendor.usb.testmode=4
 	write /proc/mtk_usb/testmode "test packet"
 ### PLATFORM VARIANT, cat $rc_file | grep write | sort | grep -vE "android0|usb20_phy" | awk '{print $2}' | uniq ###
+
+# [cannon] AW8622 震动接口权限：HAL(system) 需写 haptic_pwm 节点
+# （驱动 probe 约在内核 2s，on boot 时序在其后；ueventd 规则对此节点无效）
+on boot
+    chown system system /sys/devices/platform/haptic_pwm/activate
+    chown system system /sys/devices/platform/haptic_pwm/duration
+    chown system system /sys/devices/platform/haptic_pwm/index
+    chown system system /sys/devices/platform/haptic_pwm/hwen
+    chmod 0660 /sys/devices/platform/haptic_pwm/activate
+    chmod 0660 /sys/devices/platform/haptic_pwm/duration
+    chmod 0660 /sys/devices/platform/haptic_pwm/index
+    chmod 0660 /sys/devices/platform/haptic_pwm/hwen
