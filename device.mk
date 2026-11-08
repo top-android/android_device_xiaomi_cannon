@@ -326,7 +326,9 @@ PRODUCT_ENFORCE_RRO_TARGETS := *
 # dex2oat 硬验证雷区）。若 boot image 编译报 verifier 错，按报错逐个剔除。
 PRODUCT_BOOT_JARS += \
     mediatek-common \
-    mediatek-ims-common
+    mediatek-ims-common \
+    mediatek-telephony-common \
+    mediatek-telephony-base
 # PRODUCT_BOOT_JARS += \
 #     mediatek-common \
 #     mediatek-framework \
