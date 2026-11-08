@@ -320,6 +320,13 @@ PRODUCT_ENFORCE_RRO_TARGETS := *
 # 说明 A17 framework 不依赖这些 jar；它们仍由 cannon-vendor.mk PRODUCT_PACKAGES 装到
 # /system/framework(dex_import；其 dexpreopt 由下方 PRODUCT_DEX_PREOPT_MODULE_CONFIGS=disable 关闭)。故 A17 不再放 boot classpath。
 # [待验证] 运行期若 MTK IMS/telephony 服务需要某 mediatek 类，再按需单独加载处理。
+# [cannon][A17][2026-11-08] 验证时刻到了：ImsService 运行期 NoClassDefFound
+# OperatorCustomizationFactoryLoader（mediatek-common）。按上注思路用【最小集】：
+# 只放 IMS 依赖的 2 个 jar，不含 telephony/telecom 系（MtkXxx extends final 的
+# dex2oat 硬验证雷区）。若 boot image 编译报 verifier 错，按报错逐个剔除。
+PRODUCT_BOOT_JARS += \
+    mediatek-common \
+    mediatek-ims-common
 # PRODUCT_BOOT_JARS += \
 #     mediatek-common \
 #     mediatek-framework \
