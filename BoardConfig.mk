@@ -167,6 +167,10 @@ VENDOR_SECURITY_PATCH := 2021-11-05
 # AVB
 BOARD_AVB_ENABLE := true
 BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flags 3
+# 顶层 vbmeta 也用自有 key。不设 BOARD_AVB_KEY_PATH 时 build/make/core/Makefile:4814
+# 会回落到 AOSP 的 external/avb/test/data/testkey_rsa4096.pem（公钥 sha1 2597c218）。
+BOARD_AVB_KEY_PATH := vendor/lineage-priv/keys/avb_release.pem
+BOARD_AVB_ALGORITHM := SHA256_RSA2048
 BOARD_AVB_VBMETA_SYSTEM := system
 BOARD_AVB_VBMETA_SYSTEM_KEY_PATH := vendor/lineage-priv/keys/avb_release.pem
 BOARD_AVB_VBMETA_SYSTEM_ALGORITHM := SHA256_RSA2048

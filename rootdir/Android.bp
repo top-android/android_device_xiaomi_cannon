@@ -76,3 +76,19 @@ prebuilt_etc {
     src: "etc/fstab.mt6853",
     vendor: true,
 }
+
+// [cannon][debug] 开机卡死日志器 + 看门狗（仅调试镜像使用）
+// 装到 /system/etc/init/（init 自动解析），脚本装到 /system/etc/
+// 注意：必须装在 system，不能装 vendor —— 调试时刷的是 system.img，
+//       vendor 用的是别人那份，装在 vendor 的话 rc 根本不会被执行。
+prebuilt_etc {
+    name: "init.cannon.bootlog.rc",
+    src: "etc/init.cannon.bootlog.rc",
+    sub_dir: "init",
+}
+
+prebuilt_etc {
+    name: "cannon_bootlog.sh",
+    src: "etc/cannon_bootlog.sh",
+    filename: "cannon_bootlog.sh",
+}
