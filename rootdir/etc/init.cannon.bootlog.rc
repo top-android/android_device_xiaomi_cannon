@@ -1,0 +1,26 @@
+# cannon debug boot logger + stuck watchdog (userdebug only)
+#
+# 目的：开机卡住（init 阻塞在某个 exec_start/wait_for_prop 上）时，
+#   1) 把 dmesg / ps / 每个进程的 wchan+stack 落到 /metadata（first_stage_mount，
+#      post-fs 时一定可写，且重启后不丢）；
+#   2) 主动重启到 bootloader，方便手动进 recovery 取 /metadata 里的文件。
+#
+# 为什么要用户态看门狗而不是内核 panic：
+#   init 卡住时它是阻塞在 waitpid()/poll()（S 态），不是 CPU 自旋也不是 D 态，
+#   softlockup / hung_task 都不会触发，所以 CONFIG_PANIC_TIMEOUT 永远等不到 panic。
+#
+# 安装位置：/system/etc/init/init.cannon.bootlog.rc（随 system.img 一起刷，不依赖 vendor）
+# 正式发布前必须删除本文件与 cannon_bootlog.sh。
+
+on post-fs
+    start bootlog_watchdog
+
+service bootlog_watchdog /system/bin/sh /system/etc/cannon_bootlog.sh
+    class main
+    user root
+    group root system
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1
+    stop bootlog_watchdog

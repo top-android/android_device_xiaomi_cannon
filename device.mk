@@ -124,8 +124,17 @@ PRODUCT_PACKAGES += \
     MtkInCallService
 
 # Bluetooth
+# audio.bluetooth.default 是自编的 A17 HAL，链 libbluetooth_audio_session_aidl（AIDL 会话库）。
+# 这个会话库必须一起用自编版装进 vendor：原厂 A12 blob 只导出
+#   BluetoothAudioSession::IsSessionReady()            -> ...IsSessionReadyEv
+# 而 A17 HAL 要的是
+#   BluetoothAudioSession::IsSessionReady(bool)        -> ...IsSessionReadyEb
+# 缺 Eb 会让 dlopen 失败 -> AudioFlinger loadHwModule(bluetooth) 返回 -19
+# -> APM 少了 bluetooth/a2dp 两个 module -> setDeviceConnectionState 返回 -38
+# -> A2DP 设备不可用，声音只能留在本机扬声器。
 PRODUCT_PACKAGES += \
-    audio.bluetooth.default
+    audio.bluetooth.default \
+    libbluetooth_audio_session_aidl
 
 PRODUCT_PACKAGES += \
     android.hardware.bluetooth@1.1.vendor
@@ -485,6 +494,8 @@ PRODUCT_PACKAGES += \
     init.mt6853.usb.cannon.rc \
     init.project.rc \
     init.sensor_2_0.rc \
+    init.cannon.bootlog.rc \
+    cannon_bootlog.sh \
     ueventd.mtk.rc
 
 PRODUCT_COPY_FILES += \
@@ -663,7 +674,33 @@ PRODUCT_COPY_FILES += \
 # Inherit the proprietary files
 $(call inherit-product, vendor/xiaomi/cannon/cannon-vendor.mk)
 
-# [cannon][A17] adb 免 RSA 认证（调试便利；量产前应改回 1）
+# [cannon][A17] 强制 eng 的 ADB 属性矩阵：ro.debuggable=1 / ro.secure=0 / ro.adb.secure=0
+# （eng 1/0/0，userdebug 1/1/1，user 0/1/1）。构建变体仍然保持 userdebug，
+# 只把这 3 个属性改成 eng 的值，这样开机 adbd 直接以 root 跑、不需要 RSA 认证。
+#
+# 加载顺序（system/core/init/property_service.cpp:1200-1230）：
+#   /system/build.prop → system_ext → system_dlkm → /vendor/default.prop →
+#   /vendor/build.prop → vendor_dlkm → odm_dlkm → odm → product
+# 后面的文件覆盖前面的，同一个文件里后面的行也覆盖前面的行
+# （load_properties_from_file 用的是 (*properties)[key] = value）。
+#
+# ro.debuggable=1 由 gen_build_prop.py 按 userdebug 给出，不用动。
+# ro.secure：gen_build_prop.py 对 userdebug 硬写 ro.secure=1 进
+#   ADDITIONAL_SYSTEM_PROPERTIES，不能再往 PRODUCT_SYSTEM_PROPERTIES 里塞一个
+#   ro.secure=0 —— post_process_props 会直接报
+#   "error: found duplicate sysprop assignments"，编译中断。
+#   也绝不能写进 PRODUCT_PROPERTY_OVERRIDES（→ /vendor/build.prop）：
+#   本仓库的 vendor 补丁删掉了 android.hardware.usb@1.2-service-mediatekv2 和
+#   全部 android.hardware.usb@1.x.so，刷自编 vendor 会直接没有 adb。
+#   所以放 PRODUCT_PRODUCT_PROPERTIES → /product/build.prop。
+#   product 是属性加载的最后一环（property_service.cpp:1222），优先级最高。
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.secure=0 \
+    ro.adb.secure=0 \
+    ro.product.first_api_level=29
+
+PRODUCT_SYSTEM_PROPERTIES += \
+    service.adb.root=1
 
 # 系统更新（Updater）：指向自己的元数据仓库
 # Updater 会把 {device} 换成 ro.product.device，本机是 cannon → cannon.json
@@ -677,5 +714,5 @@ PRODUCT_PACKAGES += \
     Gboard
 
 # [cannon] 端口期恢复标准 userdebug（ro.debuggable=1）：Lineage 默认在 userdebug
-# 关调试导致 adb root 不可用。发布正式版时移除本行。
-PRODUCT_NOT_DEBUGGABLE_IN_USERDEBUG := false
+# 关调试导致 adb root 不可用。注意必须写在 lineage_cannon.mk（顶层节点），
+# 写在这里会被 common_full_phone 继承链里的 true 吃掉，见 lineage_cannon.mk。
