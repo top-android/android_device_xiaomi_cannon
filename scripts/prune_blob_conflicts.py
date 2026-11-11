@@ -30,6 +30,56 @@ KEEP = {
     "lib64/libcodec2_hidl@1.0.so",
 }
 
+# 安全剔除白名单：只删这些，其余一律保留。
+# 依据 docs/playbooks/A17_BLOB_VS_SOURCE.md §3/§4.2：
+#   - AOSP 命令、自建 HAL、AOSP .default.so 实现、3 条 init rc、2 条 wifi VINTF、
+#     AOSP 接口库（android.hardware/frameworks/hidl/system，排除 mediatek 专有）。
+# 明确不删（曾有事故）：MTK/Xiaomi 专有库（libaedv/libladder/libladder 等）、
+# lib*/hw/*-impl.so（温控/音频/相机的 MTK 实现，删了行为会变）、平台库（binder/utils/base…）、
+# codec2 全套（需 -v31 改名）。
+BIN_SAFE = {
+    "bin/sh", "bin/toolbox", "bin/toybox_vendor", "bin/dumpsys", "bin/awk",
+    "bin/logwrapper", "bin/vndservice", "bin/vndservicemanager",
+    "bin/wlan_assistant", "bin/boringssl_self_test32", "bin/boringssl_self_test64",
+    "bin/hw/android.hardware.light-service.cannon",
+    "bin/hw/android.hardware.sensors@2.1-service.cannon-multihal",
+}
+ETC_SAFE = {
+    "etc/init/hostapd.android.rc",
+    "etc/init/wlan_assistant.rc",
+    "etc/init/vndservicemanager.rc",
+    "etc/vintf/manifest/android.hardware.wifi.hostapd.xml",
+    "etc/vintf/manifest/android.hardware.wifi.supplicant.xml",
+}
+AOSP_IFACE = re.compile(
+    r"^lib(64)?/(android\.(hardware|frameworks|hidl|system)\.[^/]*-?[^/]*\.so|"
+    r"[^/]*-V[0-9]+-ndk\.so)$")
+AOSP_DEFAULT_IMPL = re.compile(r"^lib(64)?/hw/(.*\.default\.so)$")
+MTK_HINT = re.compile(r"mediatek|mtk|xiaomi|libaedv|libladder|ls_client|libmnl|libthha|"
+                      r"thermalalgo|thermal_hal|codec2|firmware|thh/|\.tp/|audio_param",
+                      re.I)
+
+
+def safe_to_drop(rel: str) -> bool:
+    if rel in KEEP or MTK_HINT.search(rel):
+        return False
+    # 2026-11-11 实测：这些删掉后源码不会安装到 vendor，运行期 dlopen 会失败：
+    #   -NDK 接口库装到 system/apex，不在 vendor；audio.r_submix/usb default 默认不进
+    #   vendor；wlan_assistant 是 vendor 私有工具（无源码模块）。
+    if re.search(r"-V[0-9]+-ndk\.so$", rel):
+        return False
+    if re.search(r"audio\.(r_submix|usb)\.default\.so$", rel):
+        return False
+    if rel in ("bin/wlan_assistant", "etc/init/wlan_assistant.rc"):
+        return False
+    if rel in BIN_SAFE or rel in ETC_SAFE:
+        return True
+    if AOSP_DEFAULT_IMPL.match(rel):
+        return True
+    if AOSP_IFACE.match(rel):
+        return True
+    return False
+
 
 def targets_from_log(path):
     if not os.path.exists(path):
@@ -57,8 +107,11 @@ def main():
         want = {l.strip() for l in open(a.list) if l.strip()}
     else:
         want = targets_from_log(LOG)
-    want = {w for w in want if w not in KEEP}
-    print("目标条目 %d（已排除 codec2 例外 %d）" % (len(want), len(KEEP)))
+    want_all = {w for w in want if w not in KEEP}
+    want = {w for w in want_all if safe_to_drop(w)}
+    hold = sorted(want_all - want)
+    print("冲突目标 %d：可安全剔除 %d，强制保留(MTK/需 -v31/需验证) %d"
+          % (len(want_all), len(want), len(hold)))
 
     lines = open(MK, "r", errors="replace").read().split("\n")
     kept, removed, i = [], [], 0
