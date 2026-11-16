@@ -122,3 +122,28 @@ cc_library_shared {
     shared_libs: ["libnetutils"],
     compile_multilib: "both",
 }
+
+// 2026-11-16 A17 BUG-6：codec2 HAL 每 5 秒 CANNOT LINK
+//
+// /vendor/bin/hw/android.hardware.media.c2@1.2-mediatek（A12 blob）经
+// libcodec2_vndk.so 引用 GraphicBufferMapper::lock 的 6 参数版本
+// （_ZN7android19GraphicBufferMapper4lockEPK13native_handlejRKNS_4RectEPPvPiS9_），
+// A17 的 libui 已删除该符号 → linker 直接拒绝执行，init 每 5 秒重启一次。
+//
+// 不能复用 libshim_cannon_vendor：它带 String16/Thread/PermissionCache/
+// gBnsConstructorMap，会覆盖 codec2 进程里 A17 libutils 的正常实现。
+// 这里只装 GraphicBufferMapper 一份源码。
+cc_library_shared {
+    name: "libshim_gbm_only",
+    srcs: [
+        "src/GraphicBufferMapper.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libui",
+        "libsync",
+        "libutils",
+    ],
+    vendor: true,
+    compile_multilib: "both",
+}

@@ -239,7 +239,8 @@ TARGET_LD_SHIM_LIBS := \
     /vendor/lib64/libcam.utils.sensorprovider.so|libshim_sensors.so \
     /vendor/bin/hw/vendor.mediatek.hardware.pq@2.2-service|libshim_cannon_vendor.so \
     /system/lib64/libsource.so|libshim_cannon_system.so \
-    /system/lib64/libsink.so|libshim_cannon_system.so
+    /system/lib64/libsink.so|libshim_cannon_system.so \
+    /vendor/bin/hw/android.hardware.media.c2@1.2-mediatek|libshim_gbm_only.so
 
 # Inherit the proprietary files
 include vendor/xiaomi/cannon/BoardConfigVendor.mk

@@ -76,6 +76,9 @@ PRODUCT_PACKAGES += \
     libcannon_audiotoolkit_system_ext \
     libcannon_videotelephony_system_ext
 
+# A17 BUG-6: codec2 HAL 缺 GraphicBufferMapper::lock 6 参数版，挂独立垫片
+PRODUCT_PACKAGES += libshim_gbm_only
+
 # Audio
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio/audio_policy.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy.conf \
