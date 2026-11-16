@@ -55,6 +55,21 @@
         <fqname>@1.0::IOmx/default</fqname>
         <fqname>@1.0::IOmxStore/default</fqname>
     </hal>
+    <!--
+        The vendor ships a working codec2 store (android.hardware.media.c2@1.2-
+        mediatek) and even a matching manifest fragment, but that fragment is
+        not installed into /vendor/etc/vintf/manifest, so nothing declares it.
+
+        Codec2Client enumerates stores with hwservicemanager's
+        listManifestByInterface(), which only returns declared instances, so
+        MediaCodecList only ever saw the software c2.android.* codecs from the
+        codec2 apex. Declare the instance the service actually registers.
+    -->
+    <hal format="hidl">
+        <name>android.hardware.media.c2</name>
+        <transport>hwbinder</transport>
+        <fqname>@1.2::IComponentStore/default</fqname>
+    </hal>
     <hal format="hidl">
         <name>android.hardware.radio</name>
         <transport>hwbinder</transport>
