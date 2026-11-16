@@ -76,6 +76,9 @@ PRODUCT_PACKAGES += \
     libcannon_audiotoolkit_system_ext \
     libcannon_videotelephony_system_ext
 
+# A17 BUG-6: codec2 HAL 缺 GraphicBufferMapper::lock 6 参数版，挂独立垫片
+PRODUCT_PACKAGES += libshim_gbm_only
+
 # Audio
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio/audio_policy.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy.conf \
@@ -674,9 +677,17 @@ PRODUCT_COPY_FILES += \
 # Inherit the proprietary files
 $(call inherit-product, vendor/xiaomi/cannon/cannon-vendor.mk)
 
-# [cannon][A17] 强制 eng 的 ADB 属性矩阵：ro.debuggable=1 / ro.secure=0 / ro.adb.secure=0
+# [cannon][A17] eng 的 ADB 属性矩阵：ro.debuggable=1 / ro.secure=0 / ro.adb.secure=0
 # （eng 1/0/0，userdebug 1/1/1，user 0/1/1）。构建变体仍然保持 userdebug，
 # 只把这 3 个属性改成 eng 的值，这样开机 adbd 直接以 root 跑、不需要 RSA 认证。
+#
+# ⚠ 这套属性只能在 userdebug/eng 上带。adbd 只有在 ro.secure=0 时才不降权，
+#   并执行 selinux_android_setcon("u:r:su:s0")
+#   （packages/modules/adb/daemon/main.cpp:176）。user 变体编出来的 sepolicy
+#   把 userdebug_or_eng() 整段裁掉，没有 adbd→su 的 dyntransition 放行，
+#   于是每次开机 FATAL "Could not set SELinux context" → SIGABRT + tombstone。
+#   user 变体保持 AOSP 默认（ro.secure=1 / ro.adb.secure=1），adbd 正常降权；
+#   需要 root 时用 KernelSU 的 su。
 #
 # 加载顺序（system/core/init/property_service.cpp:1200-1230）：
 #   /system/build.prop → system_ext → system_dlkm → /vendor/default.prop →
@@ -695,12 +706,16 @@ $(call inherit-product, vendor/xiaomi/cannon/cannon-vendor.mk)
 #   所以放 PRODUCT_PRODUCT_PROPERTIES → /product/build.prop。
 #   product 是属性加载的最后一环（property_service.cpp:1222），优先级最高。
 PRODUCT_PRODUCT_PROPERTIES += \
-    ro.secure=0 \
-    ro.adb.secure=0 \
     ro.product.first_api_level=29
+
+ifneq ($(filter userdebug eng,$(TARGET_BUILD_VARIANT)),)
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.secure=0 \
+    ro.adb.secure=0
 
 PRODUCT_SYSTEM_PROPERTIES += \
     service.adb.root=1
+endif
 
 # 系统更新（Updater）：指向自己的元数据仓库
 # Updater 会把 {device} 换成 ro.product.device，本机是 cannon → cannon.json

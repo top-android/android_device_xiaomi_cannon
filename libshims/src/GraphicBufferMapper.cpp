@@ -5,6 +5,8 @@
  */
 
 #include <stdint.h>
+
+#include <android-base/unique_fd.h>
 #include <sync/sync.h>
 #include <ui/GraphicBufferMapper.h>
 #include <ui/Rect.h>

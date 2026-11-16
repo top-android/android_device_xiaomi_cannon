@@ -241,6 +241,11 @@ TARGET_LD_SHIM_LIBS := \
     /system/lib64/libsource.so|libshim_cannon_system.so \
     /system/lib64/libsink.so|libshim_cannon_system.so
 
+# The codec2 HAL shim is NOT listed above: A17's linker no longer implements
+# TARGET_LD_SHIM_LIBS (no ldshimlibs.txt, no LD_SHIM_LIBS in linker32/64), so
+# the entry was silently ignored. libshim_gbm_only is preloaded from the HAL's
+# init rc instead (vendor/xiaomi/cannon/.../android.hardware.media.c2@1.2-mediatek.rc).
+
 # Inherit the proprietary files
 include vendor/xiaomi/cannon/BoardConfigVendor.mk
 
