@@ -1,0 +1,48 @@
+cc_binary {
+    name: "android.hardware.gnss-service.cannon",
+    // 直接顶替 MTK 那个同名路径的二进制，复用它的 file_contexts / sepolicy / rc，
+    // 避免新增域和 manifest 权限问题
+    stem: "android.hardware.gnss-service.mediatek",
+    vendor: true,
+    relative_install_path: "hw",
+    srcs: [
+        "AGnssRil.cpp",
+        "AGnss.cpp",
+        "Gnss.cpp",
+        "GnssAntennaInfo.cpp",
+        "GnssAssistanceInterface.cpp",
+        "GnssBatching.cpp",
+        "GnssDebug.cpp",
+        "GnssGeofence.cpp",
+        "GnssNavigationMessageInterface.cpp",
+        "GnssPowerIndication.cpp",
+        "GnssPsds.cpp",
+        "GnssConfiguration.cpp",
+        "GnssMeasurementInterface.cpp",
+        "GnssVisibilityControl.cpp",
+        "MeasurementCorrectionsInterface.cpp",
+        "GpsLegacyHal.cpp",
+        "service.cpp",
+    ],
+    static_libs: [
+        "android.hardware.gnss@common-default-lib",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "libhardware",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+        "android.hardware.gnss-V7-ndk",
+        "android.hardware.gnss@1.0",
+        "android.hardware.gnss@2.0",
+        "android.hardware.gnss@2.1",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+    ],
+}

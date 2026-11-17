@@ -1,0 +1,13 @@
+cc_binary {
+    name: "gnss_probe",
+    vendor: true,
+    relative_install_path: "hw",
+    srcs: ["gnss_probe.cpp"],
+    shared_libs: [
+        "libbase",
+        "libhardware",
+        "liblog",
+    ],
+    cflags: ["-Wall", "-Wno-unused-parameter"],
+    compile_multilib: "64",
+}
