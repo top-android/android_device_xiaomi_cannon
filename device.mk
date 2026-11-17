@@ -674,33 +674,20 @@ PRODUCT_COPY_FILES += \
 # Inherit the proprietary files
 $(call inherit-product, vendor/xiaomi/cannon/cannon-vendor.mk)
 
-# [cannon][A17] 强制 eng 的 ADB 属性矩阵：ro.debuggable=1 / ro.secure=0 / ro.adb.secure=0
-# （eng 1/0/0，userdebug 1/1/1，user 0/1/1）。构建变体仍然保持 userdebug，
-# 只把这 3 个属性改成 eng 的值，这样开机 adbd 直接以 root 跑、不需要 RSA 认证。
+# [cannon][A17] ADB 免授权：ro.secure=0 / ro.adb.secure=0，所有变体都生效
+# （adbd 不需要 RSA 认证，插上就能连）。构建变体是 user，ro.debuggable 保持 0。
 #
 # 加载顺序（system/core/init/property_service.cpp:1200-1230）：
 #   /system/build.prop → system_ext → system_dlkm → /vendor/default.prop →
 #   /vendor/build.prop → vendor_dlkm → odm_dlkm → odm → product
-# 后面的文件覆盖前面的，同一个文件里后面的行也覆盖前面的行
-# （load_properties_from_file 用的是 (*properties)[key] = value）。
+# product 是最后一环（property_service.cpp:1222），所以只写进 product/build.prop。
 #
-# ro.debuggable=1 由 gen_build_prop.py 按 userdebug 给出，不用动。
-# ro.secure：gen_build_prop.py 对 userdebug 硬写 ro.secure=1 进
-#   ADDITIONAL_SYSTEM_PROPERTIES，不能再往 PRODUCT_SYSTEM_PROPERTIES 里塞一个
-#   ro.secure=0 —— post_process_props 会直接报
-#   "error: found duplicate sysprop assignments"，编译中断。
-#   也绝不能写进 PRODUCT_PROPERTY_OVERRIDES（→ /vendor/build.prop）：
-#   本仓库的 vendor 补丁删掉了 android.hardware.usb@1.2-service-mediatekv2 和
-#   全部 android.hardware.usb@1.x.so，刷自编 vendor 会直接没有 adb。
-#   所以放 PRODUCT_PRODUCT_PROPERTIES → /product/build.prop。
-#   product 是属性加载的最后一环（property_service.cpp:1222），优先级最高。
+# 不要设 service.adb.root=1：adbd 见到该属性会以 --root_seclabel=u:r:su:s0 重新 exec，
+# 本 ROM 是 user 变体、没有 su 域，setexeccon 失败直接 SIGABRT（2026-11-17 实测开机崩一次）。
 PRODUCT_PRODUCT_PROPERTIES += \
     ro.secure=0 \
     ro.adb.secure=0 \
     ro.product.first_api_level=29
-
-PRODUCT_SYSTEM_PROPERTIES += \
-    service.adb.root=1
 
 # 系统更新（Updater）：指向自己的元数据仓库
 # Updater 会把 {device} 换成 ro.product.device，本机是 cannon → cannon.json
