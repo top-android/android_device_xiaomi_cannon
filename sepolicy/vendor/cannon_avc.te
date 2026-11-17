@@ -1,0 +1,23 @@
+# [cannon][A17] 补齐 boot 期 avc denied（2026-11-17 实测，按 logcat 原始行）
+#
+# 只保留 vendor policy 能放行、且不触发 AOSP neverallow 的规则。
+# 被 neverallow 挡掉、无法在设备侧补的：
+#   - wlan_assistant -> radio_prop:property_service { set }（property.te:299）
+#     -> WiFi MAC 设置仍然失败，要改 system 侧策略才有解
+#   - hal_fingerprint_default -> default_android_hwservice { add }（domain.te:834）
+#   - hal_wifi_default -> persist_vendor_debug_wifi_prop 的 ioctl/lock
+#   - vendor_init -> vendor_userdir_file:dir { write }（vold.te:416）
+#   - 读 default_prop 的 6 条：system_internal_prop，vendor 侧不可见
+#
+# adbd -> su dyntransition 已通过 user 变体保留 ro.secure=1 绕开。
+
+# wlan_assistant：读 MAC / 设备识别
+allow wlan_assistant sysfs_dt_firmware_android:dir search;
+allow wlan_assistant proc_cmdline:file r_file_perms;
+allow wlan_assistant gsi_metadata_file:dir search;
+
+# 相机 HAL 读 /proc/stat（帧率/负载统计）
+allow mtk_hal_camera proc_stat:file r_file_perms;
+
+# init 给指纹 HAL 抓 tombstone
+allow init hal_fingerprint_default:process ptrace;

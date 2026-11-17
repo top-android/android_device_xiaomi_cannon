@@ -535,6 +535,7 @@ PRODUCT_PACKAGES += \
     libsensorndkbridge \
     libbase_shim \
     libshim_cpp_verbose_abort \
+    libshim_gbm_only \
     libshim_sensors \
     libshim_cannon_vendor \
     libshim_cannon_system \
@@ -674,20 +675,27 @@ PRODUCT_COPY_FILES += \
 # Inherit the proprietary files
 $(call inherit-product, vendor/xiaomi/cannon/cannon-vendor.mk)
 
-# [cannon][A17] ADB 免授权：ro.secure=0 / ro.adb.secure=0，所有变体都生效
-# （adbd 不需要 RSA 认证，插上就能连）。构建变体是 user，ro.debuggable 保持 0。
+# [cannon][A17] ADB 免授权：ro.adb.secure=0（不需要 RSA 授权，插上就能连）。
+#
+# ro.secure=0 只能在 userdebug/eng 上带：adbd 的 should_drop_privileges()
+# （packages/modules/adb/daemon/main.cpp:66）在 ro.secure=0 时不降权，
+# 随后用 --root_seclabel=u:r:su:s0 调 selinux_android_setcon()。
+# user 变体的 sepolicy 把 userdebug_or_eng() 整段裁掉，没有 adbd→su 的
+# dyntransition，setcon 失败直接 LOG(FATAL) → 每次开机 SIGABRT + tombstone。
+# 保留 ro.secure=1 让 adbd 正常降权到 shell，免授权仍由 ro.adb.secure=0 保证。
 #
 # 加载顺序（system/core/init/property_service.cpp:1200-1230）：
 #   /system/build.prop → system_ext → system_dlkm → /vendor/default.prop →
 #   /vendor/build.prop → vendor_dlkm → odm_dlkm → odm → product
-# product 是最后一环（property_service.cpp:1222），所以只写进 product/build.prop。
-#
-# 不要设 service.adb.root=1：adbd 见到该属性会以 --root_seclabel=u:r:su:s0 重新 exec，
-# 本 ROM 是 user 变体、没有 su 域，setexeccon 失败直接 SIGABRT（2026-11-17 实测开机崩一次）。
+# product 是最后一环（property_service.cpp:1222），所以写进 product/build.prop。
 PRODUCT_PRODUCT_PROPERTIES += \
-    ro.secure=0 \
     ro.adb.secure=0 \
     ro.product.first_api_level=29
+
+ifneq ($(filter userdebug eng,$(TARGET_BUILD_VARIANT)),)
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.secure=0
+endif
 
 # 系统更新（Updater）：指向自己的元数据仓库
 # Updater 会把 {device} 换成 ro.product.device，本机是 cannon → cannon.json
@@ -703,3 +711,8 @@ PRODUCT_PACKAGES += \
 # [cannon] 端口期恢复标准 userdebug（ro.debuggable=1）：Lineage 默认在 userdebug
 # 关调试导致 adb root 不可用。注意必须写在 lineage_cannon.mk（顶层节点），
 # 写在这里会被 common_full_phone 继承链里的 true 吃掉，见 lineage_cannon.mk。
+# [cannon] GNSS：用自写的 AIDL 前端顶替 MTK 那个不接回调的 AIDL 壳
+# （MTK 只提供 legacy gps.h 模块，AIDL 层只转发请求、不建 @mtk_mnl2hal）
+PRODUCT_PACKAGES += \
+    android.hardware.gnss-service.cannon \
+    android.hardware.gnss-V7-ndk
