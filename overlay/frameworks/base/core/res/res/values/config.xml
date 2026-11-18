@@ -474,4 +474,21 @@
     <string-array name="config_disableApkUnlessMatchedSku_skus_list" translatable="false">
         <item>cannong</item>
     </string-array>
+
+    <!-- cannon: AOSP 默认这里是空的，导致 GnssConfiguration.getSuplHost() 返回 null，
+         GnssLocationProvider 从不调用 setAgpsServer()，agpsd 拿不到 SUPL 服务器，
+         SUPL 连接超时（SUPL_TIMER_CONN）→ 星历下载失败 → 卫星进不了解算。
+         用国内可达的 supl.qrd.com。LONGTERM_PSDS_SERVER 一并给出，消除
+         GnssPsdsDownloader 的 "No servers were specified" 警告。 -->
+    <string-array name="config_gnssParameters" translatable="false">
+        <item>SUPL_HOST=supl.google.com</item>
+        <item>SUPL_PORT=7275</item>
+        <item>SUPL_MODE=1</item>
+        <item>SUPL_VER=0x20000</item>
+        <item>LPP_PROFILE=2</item>
+        <item>A_GLONASS_POS_PROTOCOL_SELECT=0xf</item>
+        <item>LONGTERM_PSDS_SERVER_1=https://xtrapath1.izatcloud.net/xtra3grc.bin</item>
+        <item>LONGTERM_PSDS_SERVER_2=https://xtrapath2.izatcloud.net/xtra3grc.bin</item>
+        <item>LONGTERM_PSDS_SERVER_3=https://xtrapath3.izatcloud.net/xtra3grc.bin</item>
+    </string-array>
 </resources>

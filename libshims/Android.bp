@@ -147,3 +147,23 @@ cc_library_shared {
     vendor: true,
     compile_multilib: "both",
 }
+
+// 2026-11-18 A17 AIDL codec2（64 位）
+//
+// MTK Q 的 libcodec2_hidl@1.0.so NEEDED libstagefright_bufferqueue_helper.so，
+// 但 A17 的 bqhelper 在 vendor 命名空间里需要 libgui/libEGL/libnativewindow 等
+// 只存在于 /system 的库，装不进 /vendor；装 /system 变体又会拖进 libmedia 一大串。
+// 这里用同名 stem 只导出 blob 引用的 GraphicBufferSource 符号的空实现，
+// 解码路径不会调用（只有 c2 硬件编码的输入 surface 才会）。
+//
+// 安装名不叫 libstagefright_bufferqueue_helper.so，而是靠 SONAME 匹配：
+// rc 里 LD_PRELOAD 它，blob 的 DT_NEEDED 会通过 SONAME 命中已加载的这份，
+// 避免与 AOSP 的 bqhelper 在 /vendor 里抢同一个文件（Soong 会生成坏边）。
+cc_library_shared {
+    name: "libc2_bq_stub",
+    srcs: ["src/GraphicBufferSource_stub.cpp"],
+    vendor: true,
+    compile_multilib: "64",
+    cflags: ["-Wno-reserved-identifier"],
+    ldflags: ["-Wl,-soname,libstagefright_bufferqueue_helper.so"],
+}

@@ -15,6 +15,10 @@ class GpsLegacyHal {
     using LocationFn = std::function<void(const GpsLocation&)>;
     using StatusFn = std::function<void(int32_t status)>;
     using SvStatusFn = std::function<void(const GpsSvStatus&)>;
+    // cannon: MTK 真正使用的是新版 GnssSvStatus（槽 0x58），带每颗星的
+    // constellation / flags。旧版 GpsSvInfo 只有 prn，会把北斗/GLONASS
+    // 的 PRN 与 GPS 混淆，导致框架里全部被标成 GPS。
+    using GnssSvStatusFn = std::function<void(const GnssSvStatus&)>;
     using NmeaFn = std::function<void(int64_t timestampMs, const std::string& nmea)>;
     using CapabilitiesFn = std::function<void(uint32_t capabilities)>;
     using SystemInfoFn = std::function<void(const GnssSystemInfo& info)>;
@@ -28,7 +32,7 @@ class GpsLegacyHal {
     void setCallbacks(LocationFn location, StatusFn status, SvStatusFn svStatus, NmeaFn nmea,
                       CapabilitiesFn capabilities, SystemInfoFn systemInfo, NameFn name,
                       AcquireWakelockFn acquireWakelock, ReleaseWakelockFn releaseWakelock,
-                      RequestTimeFn requestTime);
+                      RequestTimeFn requestTime, GnssSvStatusFn gnssSvStatus = nullptr);
 
     bool init();
     bool start();
@@ -45,6 +49,7 @@ class GpsLegacyHal {
     void dispatchLocation(const GpsLocation& location);
     void dispatchStatus(int32_t status);
     void dispatchSvStatus(const GpsSvStatus& svStatus);
+    void dispatchGnssSvStatus(const GnssSvStatus& svStatus);
     void dispatchNmea(int64_t timestampMs, const std::string& nmea);
     void dispatchCapabilities(uint32_t capabilities);
     void dispatchSystemInfo(const GnssSystemInfo& info);
@@ -66,6 +71,7 @@ class GpsLegacyHal {
     LocationFn mLocation;
     StatusFn mStatus;
     SvStatusFn mSvStatus;
+    GnssSvStatusFn mGnssSvStatus;
     NmeaFn mNmea;
     CapabilitiesFn mCapabilities;
     SystemInfoFn mSystemInfo;
