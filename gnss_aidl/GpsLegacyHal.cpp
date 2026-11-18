@@ -49,8 +49,12 @@ void nameCb(const char* name, size_t length) {
     if (name == nullptr) return;
     GpsLegacyHal::get().dispatchName(std::string(name, length));
 }
-void gnssSvStatusCb(GnssSvStatus*) {
-    // 暂不上报 SV 状态，占位避免模块调用空指针
+void gnssSvStatusCb(GnssSvStatus* status) {
+    // cannon: 直接用新版结构转发，保留 svid/星座/CN0/flags。
+    // 旧版 GpsSvInfo 没有 constellation 字段，只能靠 prn 猜，
+    // 北斗(prn 1~37) 会与 GPS(1~32) 撞号 -> 框架里全变 GPS。
+    if (status == nullptr) return;
+    GpsLegacyHal::get().dispatchGnssSvStatus(*status);
 }
 void reservedCb() {}
 void acquireWakelockCb() { GpsLegacyHal::get().dispatchAcquireWakelock(); }
@@ -111,7 +115,8 @@ void GpsLegacyHal::setCallbacks(LocationFn location, StatusFn status, SvStatusFn
                                 NmeaFn nmea, CapabilitiesFn capabilities,
                                 SystemInfoFn systemInfo, NameFn name,
                                 AcquireWakelockFn acquireWakelock,
-                                ReleaseWakelockFn releaseWakelock, RequestTimeFn requestTime) {
+                                ReleaseWakelockFn releaseWakelock, RequestTimeFn requestTime,
+                                GnssSvStatusFn gnssSvStatus) {
     std::lock_guard<std::mutex> lock(mMutex);
     mLocation = std::move(location);
     mStatus = std::move(status);
@@ -123,6 +128,7 @@ void GpsLegacyHal::setCallbacks(LocationFn location, StatusFn status, SvStatusFn
     mAcquireWakelock = std::move(acquireWakelock);
     mReleaseWakelock = std::move(releaseWakelock);
     mRequestTime = std::move(requestTime);
+    mGnssSvStatus = std::move(gnssSvStatus);
     gHal = this;
 }
 
@@ -248,6 +254,9 @@ void GpsLegacyHal::dispatchStatus(int32_t status) {
 }
 void GpsLegacyHal::dispatchSvStatus(const GpsSvStatus& svStatus) {
     if (mSvStatus) mSvStatus(svStatus);
+}
+void GpsLegacyHal::dispatchGnssSvStatus(const GnssSvStatus& svStatus) {
+    if (mGnssSvStatus) mGnssSvStatus(svStatus);
 }
 void GpsLegacyHal::dispatchNmea(int64_t timestampMs, const std::string& nmea) {
     if (mNmea) mNmea(timestampMs, nmea);

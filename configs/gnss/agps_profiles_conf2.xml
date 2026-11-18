@@ -78,6 +78,9 @@
         "IPv4address:port"
   -->
 
+  <!-- cannon: 默认的 supl.google.com 需要代理才能连通（13t 同样配置 + 代理才定位）。
+       MTK 自己的 EPO 服务器 sfepodownload.mediatek.com 国内直连可达，
+       所以星历主路径不依赖 SUPL；这里保持与 13t 一致。 -->
   <cur_supl_profile name="GOOGLE"
       addr="supl.google.com"
       port="7275"

@@ -526,6 +526,7 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/seccomp/mediaextractor.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/mediaextractor.policy \
     $(LOCAL_PATH)/configs/seccomp/mediaswcodec.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/mediaswcodec.policy
 
+
 # Sensors
 PRODUCT_PACKAGES += \
     android.hardware.sensors@2.1-service.cannon-multihal \
@@ -701,6 +702,12 @@ endif
 # Updater 会把 {device} 换成 ro.product.device，本机是 cannon → cannon.json
 PRODUCT_PROPERTY_OVERRIDES += \
     lineage.updater.uri=https://cdn.jsdelivr.net/gh/top-android/releases@main/{device}.json
+
+# [cannon][A17] codec2 HAL 选择固定 aidl：MTK 只有 A10 HIDL store，其 C2 组件在
+# A17 客户端下 start() 会死锁（回调 ABI 代差），失败还会泄漏 vdec 会话，
+# 之后相机录像会卡死。所以明确走 AIDL（软解），不碰 MTK HIDL store。
+PRODUCT_PROPERTY_OVERRIDES += \
+    media.c2.hal.selection=aidl
 
 # Gboard 预装：base + 密度 split 已用 APKEditor 合并成单包，模块定义在
 # vendor/xiaomi/cannon/gboard/Android.bp（presigned，装到 /product/app/Gboard/）

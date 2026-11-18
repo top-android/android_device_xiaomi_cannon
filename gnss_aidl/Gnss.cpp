@@ -229,6 +229,125 @@ void Gnss::reportLocation(const GnssLocation& location) {
     return;
 }
 
+// （已移除按 prn 推断星座的函数：北斗/GLONASS 的 prn 与 GPS 重叠，
+//   推断必然出错，改为直接使用模块上报的 constellation。）
+
+// cannon: 解析 NMEA GSV 构建卫星列表。MTK 的 GnssSvStatus 二进制布局与
+// AOSP gps.h 不一致（多出字段），直接用会错位；GSV 是文本协议，talker 标明
+// 星座，不会错位，而且芯片已经把全部 in-view 卫星都输出成 GSV 了。
+void Gnss::handleNmeaForSv(const std::string& nmea) {
+    size_t gsv = nmea.find("GSV,");
+    if (gsv == std::string::npos || gsv < 2) {
+        return;
+    }
+    {
+        static int sEnter = 0;
+        if (sEnter < 6) {
+            ALOGD("SVDBG enter talker=%.2s len=%zu", nmea.c_str() + (gsv - 2), nmea.size());
+            sEnter++;
+        }
+    }
+    const std::string talker = nmea.substr(gsv - 2, 2);
+
+    GnssConstellationType fixedConst{};
+    bool known = true;
+    if (talker == "GP") {
+        fixedConst = GnssConstellationType::GPS;
+    } else if (talker == "GL") {
+        fixedConst = GnssConstellationType::GLONASS;
+    } else if (talker == "GA") {
+        fixedConst = GnssConstellationType::GALILEO;
+    } else if (talker == "GB") {
+        fixedConst = GnssConstellationType::BEIDOU;
+    } else if (talker == "GQ") {
+        fixedConst = GnssConstellationType::QZSS;
+    } else {
+        known = false;  // GN 混合句
+    }
+
+    std::string body = nmea;
+    size_t star = body.rfind('*');
+    if (star != std::string::npos) {
+        body.resize(star);
+    }
+
+    std::vector<std::string> f;
+    size_t start = 0;
+    while (true) {
+        size_t comma = body.find(',', start);
+        if (comma == std::string::npos) {
+            f.push_back(body.substr(start));
+            break;
+        }
+        f.push_back(body.substr(start, comma - start));
+        start = comma + 1;
+    }
+    if (f.size() < 4) {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(mGsvMutex);
+    for (size_t i = 4; i + 3 < f.size(); i += 4) {
+        int prn = std::atoi(f[i].c_str());
+        if (prn <= 0) {
+            continue;
+        }
+        float elev = std::atof(f[i + 1].c_str());
+        float azim = std::atof(f[i + 2].c_str());
+        float snr = f[i + 3].empty() ? 0.0f : std::atof(f[i + 3].c_str());
+
+        GnssConstellationType c = fixedConst;
+        if (!known) {
+            if (prn >= 65 && prn <= 96) {
+                c = GnssConstellationType::GLONASS;
+            } else if (prn >= 193 && prn <= 200) {
+                c = GnssConstellationType::QZSS;
+            } else if (prn >= 201 && prn <= 237) {
+                c = GnssConstellationType::BEIDOU;
+            } else if (prn >= 301 && prn <= 336) {
+                c = GnssConstellationType::GALILEO;
+            } else {
+                c = GnssConstellationType::GPS;
+            }
+        }
+
+        uint64_t key = (static_cast<uint64_t>(c) << 32) | static_cast<uint32_t>(prn);
+        IGnssCallback::GnssSvInfo info{};
+        info.svid = prn;
+        info.constellation = c;
+        info.cN0Dbhz = snr;
+        info.elevationDegrees = elev;
+        info.azimuthDegrees = azim;
+        info.svFlag = static_cast<int32_t>(IGnssCallback::GnssSvFlags::HAS_ALMANAC_DATA);
+        if (snr > 0.0f) {
+            info.svFlag |= static_cast<int32_t>(IGnssCallback::GnssSvFlags::HAS_EPHEMERIS_DATA);
+        }
+        mGsvMap[key] = info;
+    }
+
+    // 1 秒节流上报，避免每条 GSV 都触发一次 binder 回调
+    auto now = std::chrono::steady_clock::now();
+    if (mLastGsvReport.time_since_epoch().count() != 0 &&
+        now - mLastGsvReport < std::chrono::milliseconds(1000)) {
+        return;
+    }
+    mLastGsvReport = now;
+
+    std::vector<IGnssCallback::GnssSvInfo> list;
+    list.reserve(mGsvMap.size());
+    for (const auto& kv : mGsvMap) {
+        list.push_back(kv.second);
+    }
+    {
+        static int sRep = 0;
+        if (sRep < 6) {
+            ALOGD("SVDBG report cnt=%zu", list.size());
+            sRep++;
+        }
+    }
+    reportSvStatus(list);
+}
+
 void Gnss::reportSvStatus() const {
     if (mIsSvStatusActive) {
         auto svStatus = filterBlocklistedSatellites(Utils::getMockSvInfoList());
@@ -518,8 +637,13 @@ void Gnss::registerLegacyCallbacks() {
                 }
                 reportGnssStatusValue(value);
             },
-            nullptr,  // sv status 暂不转
+            // cannon: 旧版 GpsSvStatus 没有 constellation 字段，北斗(prn 1~37)
+            // 会和 GPS(1~32) 撞号，导致框架里全部显示成 GPS。这里不再使用，
+            // 改用最后注册的新版 GnssSvStatus 回调。
+            nullptr,
             [this](int64_t timestampMs, const std::string& nmea) {
+                // cannon: 从 GSV 构建卫星列表（绕开 MTK 私有 SV 结构）
+                handleNmeaForSv(nmea);
                 std::shared_ptr<IGnssCallback> callback;
                 {
                     std::unique_lock<std::mutex> lock(mMutex);
@@ -529,7 +653,12 @@ void Gnss::registerLegacyCallbacks() {
                     callback->gnssNmeaCb(timestampMs, nmea);
                 }
             },
-            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            // cannon: MTK 的 GnssSvStatus 二进制布局与 AOSP gps.h 不一致（带额外字段），
+            // 按 gps.h 解析会错位：角度字段读到载波频率(1575.42MHz/1602MHz)、
+            // num_svs 虚高(33 实际 11 颗)、每 3 个槽位才 1 颗真卫星。
+            // 因此改为解析芯片输出的 NMEA GSV（见 handleNmeaForSv）。
+            nullptr);
 }
 
 

@@ -30,7 +30,10 @@
 #include <aidl/android/hardware/gnss/measurement_corrections/BnMeasurementCorrectionsInterface.h>
 #include <aidl/android/hardware/gnss/visibility_control/BnGnssVisibilityControl.h>
 #include <atomic>
+#include <chrono>
+#include <map>
 #include <mutex>
+#include <string>
 #include <thread>
 #include "GnssConfiguration.h"
 #include "GpsLegacyHal.h"
@@ -109,6 +112,12 @@ class Gnss : public BnGnss {
     // cannon: 把 MTK legacy gps.h 的回调接到 AIDL 回调上
     void registerLegacyCallbacks();
 
+    // cannon: 从 NMEA GSV 构建卫星列表。
+    // MTK 的 legacy GnssSvStatus 结构与 AOSP gps.h 不一致（带额外字段），
+    // 直接按 gps.h 解析会错位（角度字段读成载波频率、num_svs 虚高）。
+    // GSV 是公开 NMEA，talker 直接标明星座，不会错位。
+    void handleNmeaForSv(const std::string& nmea);
+
     static std::shared_ptr<IGnssCallback> sGnssCallback;
 
     std::atomic<long> mMinIntervalMs;
@@ -126,6 +135,11 @@ class Gnss : public BnGnss {
     ::android::hardware::gnss::common::ThreadBlocker mThreadBlocker;
 
     mutable std::mutex mMutex;
+
+    // cannon: GSV 解析累积的卫星表（key = constellation<<32 | svid）
+    std::mutex mGsvMutex;
+    std::map<uint64_t, IGnssCallback::GnssSvInfo> mGsvMap;
+    std::chrono::steady_clock::time_point mLastGsvReport{};
 };
 
 }  // namespace aidl::android::hardware::gnss
