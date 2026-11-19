@@ -526,6 +526,36 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/seccomp/mediaextractor.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/mediaextractor.policy \
     $(LOCAL_PATH)/configs/seccomp/mediaswcodec.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/mediaswcodec.policy
 
+# codec2 AIDL HAL（A17 framework 只认 AIDL IComponentStore；MTK 硬解 blob 通过
+# libcodec2_aidl 桥接成 /default，硬解组件才出现在 MediaCodecList 里）。
+#
+# 这里用预编译件而不是 Soong 模块，原因：
+#  1) libcodec2_vndk.so 是 A17 /system 变体，DT_NEEDED 已从 libdmabufheap.so 改成
+#     libdmabuf_a17.so；vendor 命名空间里 /vendor/lib64/libdmabufheap.so 是 A12 原厂
+#     版本，缺 A17 的 BufferAllocator 符号，直接链接会 dlopen 失败。
+#  2) 若让 Soong 从源码生成 /vendor 变体，会与上面的预编译件抢同一个安装路径，且
+#     NEEDED 又指回 A12 的 libdmabufheap。
+# libdmabuf_a17.so 是 A17 libdmabufheap 的改名副本（SONAME 同步改）。
+# 这些文件与已验证可用的 Magisk 模块 payload 字节一致。
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/prebuilts/c2aidl/android.hardware.media.c2-default-service:$(TARGET_COPY_OUT_VENDOR)/bin/hw/android.hardware.media.c2-default-service \
+    $(LOCAL_PATH)/prebuilts/c2aidl/android.hardware.media.c2-default-seccomp_policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/android.hardware.media.c2-default-seccomp_policy \
+    $(LOCAL_PATH)/prebuilts/c2aidl/libcodec2_aidl.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libcodec2_aidl.so \
+    $(LOCAL_PATH)/prebuilts/c2aidl/libcodec2_vndk.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libcodec2_vndk.so \
+    $(LOCAL_PATH)/prebuilts/c2aidl/libcodec2_hidl_plugin.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libcodec2_hidl_plugin.so \
+    $(LOCAL_PATH)/prebuilts/c2aidl/libdmabuf_a17.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libdmabuf_a17.so \
+    $(LOCAL_PATH)/prebuilts/c2aidl/libstagefright_foundation.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libstagefright_foundation.so
+
+# 服务本体的 init rc 和 VINTF 片段由 frameworks/av 的 Soong 模块安装
+# （rc 已改成上面那套 LD_PRELOAD；二进制与 prebuilts 里的副本 md5 一致）。
+# 之前 rc/片段是手工单编该模块留下的 staging 残留，会多起一个服务，
+# 还会和 configs/vintf/manifest.xml 里的 AIDL 声明撞成 Conflicting FqInstance。
+PRODUCT_PACKAGES += \
+    android.hardware.media.c2-default-service \
+    libc2_bq_stub \
+    libshim_no_vintf \
+    libshim_dmabuf_alloc
+
 
 # Sensors
 PRODUCT_PACKAGES += \

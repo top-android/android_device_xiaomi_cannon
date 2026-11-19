@@ -70,6 +70,16 @@
         <transport>hwbinder</transport>
         <fqname>@1.2::IComponentStore/default</fqname>
     </hal>
+    <!--
+        [cannon][A17] 同一个 HAL 的 AIDL 版本由 frameworks/av 的
+        android.hardware.media.c2-default-service 提供（把 MTK 的
+        libcodec2_mtk_c2store 桥接成 AIDL store，硬解组件才进 MediaCodecList）。
+        A17 framework 只查 AIDL store，media.c2.hal.selection=aidl。
+
+        这里不再重复声明：该 Soong 模块自带 VINTF 片段
+        （/vendor/etc/vintf/manifest/manifest_media_c2_default.xml），
+        两处同时声明会被 check_vintf 判成 Conflicting FqInstance。
+    -->
     <hal format="hidl">
         <name>android.hardware.radio</name>
         <transport>hwbinder</transport>

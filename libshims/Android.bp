@@ -140,6 +140,7 @@ cc_library_shared {
     ],
     shared_libs: [
         "libbase",
+        "liblog",
         "libui",
         "libsync",
         "libutils",
@@ -166,4 +167,43 @@ cc_library_shared {
     compile_multilib: "64",
     cflags: ["-Wno-reserved-identifier"],
     ldflags: ["-Wl,-soname,libstagefright_bufferqueue_helper.so"],
+}
+
+// 2026-11-19 硬解 AIDL：补 A17 libcodec2_vndk 需要的
+// BufferAllocator::Alloc(string, size_t, unsigned)（3 参数重载）。
+// 厂商 libdmabufheap.so 只有 4 参数版本；只把这个 shim 预加载进
+// codec2 AIDL 服务，避免替换全局 libdmabufheap 破坏 gralloc/SF。
+cc_library_shared {
+    name: "libshim_dmabuf_alloc",
+    srcs: [
+        "src/DmabufAllocShim.c",
+    ],
+    shared_libs: [
+        "libdl",
+    ],
+    vendor: true,
+    compile_multilib: "64",
+}
+
+// 以 mediacodec 域 + LD_PRELOAD 启动 codec2 AIDL 服务（Magisk 模块用）
+cc_binary {
+    name: "c2aidl_launch",
+    srcs: [
+        "src/C2AidlLaunch.c",
+    ],
+    shared_libs: [
+        "libselinux",
+    ],
+    vendor: true,
+    compile_multilib: "64",
+}
+
+// 吞掉 AIBinder_markVintfStability，让模块自带的 AIDL store 无需 VINTF 声明即可注册
+cc_library_shared {
+    name: "libshim_no_vintf",
+    srcs: [
+        "src/NoVintfShim.c",
+    ],
+    vendor: true,
+    compile_multilib: "64",
 }
