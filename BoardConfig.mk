@@ -82,6 +82,15 @@ BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
 # 就地打 blob 补丁、把新文件登记进 file_list.txt，再由 build_image 一并打包并由 file_contexts.bin
 # 自动打 SELinux 标签。**不用 mount**（build 的 nsjail user namespace 内禁 loop mount）。
 # 使 `m vendorimage` / `m bacon` 单步产出已装配的完整 vendor.img。留空则退化为裸镜像。
+#
+# [cannon][A17][2026-11-21] 别删这个钩子 —— 2026-11-20 删过一次，整包卡第一屏。
+# 原因：同一份源码的 system 变体和 vendor 变体内容并不一样，最典型是 libc++：
+#   system 版 2331 个导出符号，vendor 变体只有 2159（少 std::filesystem / std::pmr / __cxa_*
+#   等 257 个），而 AOSP 自己编的 vendor 二进制（vndservicemanager、graphics.composer 服务等）
+#   是按完整 libc++ 链接的 → 用 vendor 变体直接 "cannot locate symbol"，287 个 vendor 二进制
+#   全部加载失败，adbd 都起不来。MTK blob 是按精简版链的，所以 /vendor 只能放完整的 system 版。
+# 同理 libcutils/libexpat/libpng/libhidlmemory/libcurl/libunwindstack/libutilscallstack/liblzma/
+# libexif/android.hardware.media.c2@1.x 也都要 system 版。
 BOARD_CANNON_VENDOR_PREASSEMBLE := $(DEVICE_PATH)/tools/a16_preassemble_vendor.sh
 BOARD_SUPER_PARTITION_SIZE := 9126805504 # TODO: Fix hardcoded value
 BOARD_SUPER_PARTITION_GROUPS := xiaomi_dynamic_partitions
