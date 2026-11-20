@@ -65,6 +65,7 @@ cc_library_shared {
     srcs: ["cannon_vendor_src_deps.c"],
     shared_libs: [
         "libcodec2_soft_common",
+        "libcodec2_vndk",
     ],
     strip: {
         none: true,
