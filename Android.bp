@@ -5,4 +5,122 @@
 //
 
 soong_namespace {
+    // [cannon][A17][2026-11-21] 让本 namespace 能引用 hardware/mediatek 里的
+    // MTK HIDL 接口库（cannon_vendor_src_deps 桩需要）。
+    imports: ["hardware/mediatek"],
+}
+
+// [cannon][A17][2026-11-21]
+// vendor 侧 HAL/服务全是 MTK blob（PRODUCT_COPY_FILES 进来），不进 Soong 依赖图，
+// 所以这批 vendor_available 的库在 vendor 侧没有消费者。只把它们写进
+// PRODUCT_PACKAGES 时 Soong 只装 system 变体，vendor 变体不会落进 /vendor，
+// 构建会打印 "Removed file that is no longer installed" 并从 vendor.img 丢掉。
+//
+// 这里用 vendor 的 cc_library_shared 建立 sharedLibDepTag 依赖：
+// Soong 会为每个依赖生成 <name>.vendor 的 Make 模块名并写进
+// LOCAL_REQUIRED_MODULES（见 cc/androidmk.go 的 AndroidMkRuntimeLibs），
+// Make 于是把 vendor 变体装进 /vendor。
+//
+// 分成五个桩：同一个模块不能同时依赖同一个 aidl_interface 的两个版本
+// （graphics.common-V5 和 libcodec2_soft_common 传递依赖带来的 V7 会冲突），
+// 所以按依赖簇拆开，各自编译。
+//
+// 注意：
+//  - 不能用 phony：phony 的 AndroidMk 走 Custom 分支，不输出 LOCAL_VENDOR_MODULE，
+//    required 仍按 system 分区解析。
+//  - 不要加 libhwminijail（//system/libhidl/minijail 可见性受限）。
+cc_library_shared {
+    name: "cannon_vendor_src_deps_gfx",
+    vendor: true,
+    srcs: ["cannon_vendor_src_deps.c"],
+    shared_libs: [
+        "android.hardware.graphics.common-V5-ndk",
+        "android.hardware.wifi.common-V1-ndk",
+        "android.hardware.sensors-V2-ndk",
+        "libcppbor_external",
+        "libion",
+    ],
+    strip: {
+        none: true,
+    },
+}
+
+cc_library_shared {
+    name: "cannon_vendor_src_deps_audio",
+    vendor: true,
+    srcs: ["cannon_vendor_src_deps.c"],
+    shared_libs: [
+        "android.hardware.audio.common-V3-ndk",
+        "android.hardware.bluetooth.audio-V4-ndk",
+        "android.media.audio.common.types-V3-ndk",
+    ],
+    strip: {
+        none: true,
+    },
+}
+
+cc_library_shared {
+    name: "cannon_vendor_src_deps_codec2",
+    vendor: true,
+    srcs: ["cannon_vendor_src_deps.c"],
+    shared_libs: [
+        "libcodec2_soft_common",
+    ],
+    strip: {
+        none: true,
+    },
+}
+
+cc_library_shared {
+    name: "cannon_vendor_src_deps_mtk",
+    vendor: true,
+    srcs: ["cannon_vendor_src_deps.c"],
+    shared_libs: [
+        "vendor.mediatek.hardware.bluetooth.audio@2.1",
+        "vendor.mediatek.hardware.bluetooth.audio@2.2",
+        "vendor.mediatek.hardware.lbs@1.0",
+        "vendor.mediatek.hardware.log@1.0",
+        "vendor.mediatek.hardware.mtkradioex@2.0",
+        "vendor.mediatek.hardware.mtkradioex@3.0",
+        "vendor.mediatek.hardware.netdagent@1.0",
+    ],
+    strip: {
+        none: true,
+    },
+}
+
+cc_library_shared {
+    name: "cannon_vendor_src_deps_sys",
+    vendor: true,
+    srcs: ["cannon_vendor_src_deps.c"],
+    shared_libs: [
+        "android.hardware.media.c2@1.0",
+        "android.hardware.media.c2@1.1",
+        "android.hardware.media.c2@1.2",
+        "libcamera_metadata",
+        "libcurl",
+        "libexif",
+        "libexpat",
+        "liblzma",
+        "libpng",
+        "libunwindstack",
+        "libutilscallstack",
+    ],
+    strip: {
+        none: true,
+    },
+}
+
+// libcamera_metadata 是 native:vndk 链接类型，Soong 不会把 vendor 变体装进 /vendor，
+// 但 MTK camera blob 有 DT_NEEDED libcamera_metadata.so（libcamera_metadata_shim
+// 也是靠 dlsym(RTLD_NEXT) 转发给它）。这里用模块引用做成 prebuilt 装进 /vendor，
+// 文件名用 stem 保持 libcamera_metadata.so。
+cc_prebuilt_library_shared {
+    name: "libcamera_metadata_cannon",
+    stem: "libcamera_metadata",
+    vendor: true,
+    srcs: [":libcamera_metadata"],
+    strip: {
+        none: true,
+    },
 }
