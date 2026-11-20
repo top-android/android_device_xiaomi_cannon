@@ -544,6 +544,7 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/prebuilts/c2aidl/libcodec2_vndk.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libcodec2_vndk.so \
     $(LOCAL_PATH)/prebuilts/c2aidl/libcodec2_hidl_plugin.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libcodec2_hidl_plugin.so \
     $(LOCAL_PATH)/prebuilts/c2aidl/libdmabuf_a17.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libdmabuf_a17.so \
+    $(LOCAL_PATH)/prebuilts/c2aidl/libstagefright_bufferqueue_helper.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libstagefright_bufferqueue_helper.so \
     $(LOCAL_PATH)/prebuilts/c2aidl/libstagefright_foundation.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libstagefright_foundation.so
 
 # 服务本体的 init rc 和 VINTF 片段由 frameworks/av 的 Soong 模块安装
