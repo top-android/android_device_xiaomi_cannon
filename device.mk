@@ -780,3 +780,12 @@ PRODUCT_PACKAGES += \
     libprotobuf-cpp-lite-21.12-vendorcompat \
     libwpa_client \
     wlan_assistant
+
+# [cannon][A17][2026-11-21] 实验桩：把剩余 blob 的 HIDL/AIDL 接口库和原生库换回源码
+PRODUCT_PACKAGES += \
+    cannon_vendor_src_deps_hidl32 \
+    cannon_vendor_src_deps_hidl64 \
+    cannon_vendor_src_deps_aidl32 \
+    cannon_vendor_src_deps_aidl64 \
+    cannon_vendor_src_deps_native32 \
+    cannon_vendor_src_deps_native64
