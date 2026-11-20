@@ -35,18 +35,6 @@ cc_library_shared {
         "libutilscallstack",
         "liblzma",
         "libexif",
-        // [cannon][A17][2026-11-20] 删掉 a16_preassemble_vendor.sh 时漏掉的三个：
-        // 原来脚本是从 system staging 拷进 vendor staging 并登记 file_list 的，
-        // 光靠 PRODUCT_PACKAGES 装不进 vendor（没有 vendor 依赖边）。实测缺了之后：
-        //   libhidlmemory.so(64) → libdpframework/libpqparamparser 加载失败
-        //                        → hwcomposer.mt6853 加载失败 → 卡第一屏
-        //   media.c2@1.0/1.1/1.2(32) → 32 位 codec2 服务起不来
-        //   libpng.so(32) → libminiui(32) 加载失败（充电动画）
-        "libhidlmemory",
-        "libpng",
-        "android.hardware.media.c2@1.0",
-        "android.hardware.media.c2@1.1",
-        "android.hardware.media.c2@1.2",
         // MTK vendor 接口库（HIDL cc_library，不是 AIDL）
         "vendor.mediatek.hardware.bluetooth.audio@2.1",
         "vendor.mediatek.hardware.bluetooth.audio@2.2",
