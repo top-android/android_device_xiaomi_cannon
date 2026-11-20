@@ -113,6 +113,45 @@ PRODUCT_PACKAGES += \
     audio.usb.default:32 \
     audio_policy.stub:32
 
+# [cannon][A17][2026-11-20] 这几个 hw 模块原先只靠 cannon-vendor.mk 的 PRODUCT_COPY_FILES
+# 进包，不在 PRODUCT_PACKAGES 里；copy 行删掉后就不进 vendor 镜像了（wlan_assistant 更是
+# init 服务，缺了 wifi 直接挂）。显式加进来让 Soong 自己装。
+PRODUCT_PACKAGES += \
+    wlan_assistant \
+    audio.r_submix.default:64 \
+    audio.r_submix.default:32 \
+    audio.usb.default:64 \
+    audio_policy.stub:64
+
+# [cannon][A17][2026-11-20] 第二批：181 个 vendor 库改用源码产物。
+# 这些库的 vendor 变体本来就会被 Soong 装到 out/.../vendor/lib{,64}/（installs-lineage_cannon.mk
+# 里每条都有 android_vendor_arm64_*_shared 规则），但一直有两道覆盖把它们盖掉：
+#   1) cannon-vendor.mk 里同路径的 blob PRODUCT_COPY_FILES；
+#   2) tools/a16_preassemble_vendor.sh 在 build_image 之前又把 system 版拷进 vendor staging。
+# 现在两道都去掉，让 Soong 的 vendor 变体留到最后（preasm 脚本已于 2026-11-20 删除）。
+# 逐条实测记录见 /cannon/code/vendor-blob-verify/results.tsv，失败保留原厂的 28 个见 tier3-notes.md。
+# 注意：libutils / libhidlbase 故意保持 blob —— 前者要留 incStrong 容忍补丁，后者源码版
+# 会让 goodix 指纹和 thermal@1.0 服务消失。
+#
+# [cannon][A17][2026-11-20] 下面这批必须显式列进 PRODUCT_PACKAGES：
+# 它们的 vendor 变体 Soong 会编，但没被别的模块依赖，删掉 COPY 后既不进 file_list
+# 也没有到 vendor.img 的依赖边，结果就是「文件不在 staging 里」——2026-11-20 第一次
+# 改完编到 vendor.img 时被 preasm 自检抓出来（缺 libcurl/libunwindstack/libutilscallstack/
+# liblzma/libexpat 等 24 个）。显式列出来才能让 soong 分析成图时就把依赖定好。
+# 前 4 个（libcurl/libunwindstack/libutilscallstack/liblzma）原本只靠 preasm 注入，
+# 现在也改成编译期安装。
+# [cannon][A17][2026-11-20] 实测结论：Soong 的 vendor 变体只有两种情况会真的落到
+# out/.../vendor/lib{,64}/ —— 模块本身 vendor: true，或者有别的 vendor 模块依赖它。
+# vendor_available: true 但没人依赖的库（libion/libexpat/libcppbor_external/各种 *-ndk 等），
+# 就算写进 PRODUCT_PACKAGES 也只装 /system 那份，vendor 里照样没有（.intermediates 里
+# vendor 变体编出来了，staging 里就是不见）。所以这批只能继续走 cannon-vendor.mk 的 blob COPY，
+# 本文件里只列真正能装进 vendor 的两个 vendor: true 模块。
+PRODUCT_PACKAGES += \
+    libaedv \
+    libladder \
+    libcannon_vendor_bundle \
+    libcannon_vendor_bundle_aidl
+
 PRODUCT_PACKAGES += \
     libaudiopreprocessing \
     libalsautils \
@@ -537,6 +576,11 @@ PRODUCT_COPY_FILES += \
 #     NEEDED 又指回 A12 的 libdmabufheap。
 # libdmabuf_a17.so 是 A17 libdmabufheap 的改名副本（SONAME 同步改）。
 # 这些文件与已验证可用的 Magisk 模块 payload 字节一致。
+# libstagefright_bufferqueue_helper.so：MTK 的 libcodec2_hidl@1.x.so 把它写进
+# DT_NEEDED，而 ld.so 是按**文件名**在命名空间里找，rc 里 LD_PRELOAD 的 SONAME
+# 别名救不了可执行文件自身的依赖（link_image 先于 preload）。所以必须真的存在
+# 这个文件；内容就是 libc2_bq_stub（SONAME 同名，GraphicBufferSource 空实现，
+# 只有硬编 surface 输入会用到，解码路径不碰）。
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/prebuilts/c2aidl/android.hardware.media.c2-default-service:$(TARGET_COPY_OUT_VENDOR)/bin/hw/android.hardware.media.c2-default-service \
     $(LOCAL_PATH)/prebuilts/c2aidl/android.hardware.media.c2-default-seccomp_policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/android.hardware.media.c2-default-seccomp_policy \
@@ -544,7 +588,8 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/prebuilts/c2aidl/libcodec2_vndk.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libcodec2_vndk.so \
     $(LOCAL_PATH)/prebuilts/c2aidl/libcodec2_hidl_plugin.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libcodec2_hidl_plugin.so \
     $(LOCAL_PATH)/prebuilts/c2aidl/libdmabuf_a17.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libdmabuf_a17.so \
-    $(LOCAL_PATH)/prebuilts/c2aidl/libstagefright_foundation.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libstagefright_foundation.so
+    $(LOCAL_PATH)/prebuilts/c2aidl/libstagefright_foundation.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libstagefright_foundation.so \
+    $(LOCAL_PATH)/prebuilts/c2aidl/libstagefright_bufferqueue_helper.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libstagefright_bufferqueue_helper.so
 
 # 服务本体的 init rc 和 VINTF 片段由 frameworks/av 的 Soong 模块安装
 # （rc 已改成上面那套 LD_PRELOAD；二进制与 prebuilts 里的副本 md5 一致）。
@@ -579,11 +624,9 @@ PRODUCT_PACKAGES += \
 # cannon A16（老 vendor 上新系统）：SurfaceFlinger / 媒体依赖闭包。
 # A16 已移除 VNDK，下列库是 system 私有库，vendor 命名空间的 SF/Mali/media HAL 找不到它们
 # → libgralloc_extra→libGLES_mali dlopen 失败 → SurfaceFlinger EGL null → SIGSEGV 黑屏。
-# 之前是"手工注入 vendor 镜像"（每次裸 m vendorimage 都会丢 → 黑屏回归）。
-# 这里强制它们参与构建（保证 $(TARGET_OUT) 有产物）；真正拷进 /vendor 由
-#   scripts/a16_assemble_vendor.sh 在 m vendorimage 之后自动完成
-#   （注意：不能在本文件用 PRODUCT_COPY_FILES + $(TARGET_OUT)——解析期 TARGET_OUT 为空，
-#    实测会展开成 /lib64/xxx，无效）。
+# [cannon][A17][2026-11-20] 现在由 device/xiaomi/cannon/vendor_bundle 的桩模块
+# libcannon_vendor_bundle 用 shared_libs 造依赖边，Soong 在分析成图时就把 vendor 变体
+# 装进 out/.../vendor/lib{,64}/ 并登记进 vendor 的 file_list —— 不再有「出镜像后注入」。
 PRODUCT_PACKAGES += \
     libunwindstack \
     libutilscallstack \
@@ -702,6 +745,30 @@ PRODUCT_COPY_FILES += \
     device/xiaomi/cannon/prebuilt/linkerconfig/com.android.wifi/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.wifi/ld.config.txt \
     device/xiaomi/cannon/prebuilt/lib64/pixel-power-ext-V1-ndk.so:$(TARGET_COPY_OUT_VENDOR)/lib64/pixel-power-ext-V1-ndk.so \
     device/xiaomi/cannon/prebuilt/lib64/pixelatoms-cpp.so:$(TARGET_COPY_OUT_VENDOR)/lib64/pixelatoms-cpp.so
+
+# [cannon][A17][2026-11-20] 33 个 vendor blob 换成源码产物。
+# 做法：从 cannon-vendor.mk 删掉对应的 PRODUCT_COPY_FILES 行，让 Soong 模块自己装到
+# 同一路径（已逐个用 /cannon/out-user/soong/installs-lineage_cannon.mk 核对过目标一致）。
+# 验证方式：Magisk 单文件模块一次只换一个 → 重启 → 核对 md5 / 新增链接错误 / 功能检查，
+# 结论见 /cannon/code/vendor-blob-verify/tier1-results.md 和 tier2-results.md。
+#   工具类 9 个：sh toybox_vendor awk dumpsys logwrapper vndservice wlan_assistant
+#                boringssl_self_test32/64（vndservicemanager 更早已换源码）
+#   HAL 服务 7 个：drm-service.clearkey health@2.1-service light-service.cannon
+#                 gatekeeper@1.0-service media.omx@1.0-service
+#                 sensors@2.1-service.cannon-multihal graphics.composer@2.1-service
+#   HAL 库 17 个：health@2.0-impl-2.1 gatekeeper@1.0-impl hidl.memory@1.0-impl(64/32)
+#                 soundtrigger@2.3-impl(32)，以及 gralloc/power/vibrator/local_time/
+#                 audio.r_submix(64/32)/audio.usb/audio_policy.stub 这些 *.default.so
+#                 （本机无调用方，属死代码，换掉只为少几个 blob）
+#
+# 仍然必须用原厂 blob 的（源码版实测失败，不要动）：
+#   bin/toolbox（缺 android::base::Join，且 setprop/getprop 软链到它）
+#   bin/hw/android.hardware.power-service-mediatek（abort，缺 libpowerhal.so）
+#   bin/hw/android.hardware.audio.service(.mediatek)（std::bad_alloc）
+#   lib*/hw/audio.primary.default.so、lib/hw/android.hardware.audio@7.0-impl.so
+#     （A17 SourceMetadata 配 A12 audio.primary.mt6853.so，updateSourceMetadata 崩）
+#   lib*/hw/android.hardware.thermal@1.0-impl.so（AIDL thermal 起不来）
+#   bin/hw/android.hardware.nfc@1.2-service（本机无 NFC，SKU 不匹配，服务不启动）
 
 # Inherit the proprietary files
 $(call inherit-product, vendor/xiaomi/cannon/cannon-vendor.mk)
