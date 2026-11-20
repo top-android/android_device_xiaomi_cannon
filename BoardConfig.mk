@@ -76,18 +76,13 @@ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_SYSTEM_EXTIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
-# [cannon][A17][2026-11-20] vendor.img 不再有「出镜像后二次注入」这一步。
-# 历史：A16 时 build/make/core/Makefile 的 build-vendorimage-target 会在 build_image 之前
-# 调用 tools/a16_preassemble_vendor.sh，把 system 库拷进 vendor staging、给 blob 打字节补丁。
-# A17 起这些全部改成编译期定义：
-#   · 有 vendor 依赖的库 —— Soong vendor 变体直接进 staging；
-#   · 没人依赖的 vendor_available 库 —— device/xiaomi/cannon/vendor_bundle 的桩模块造依赖边；
-#   · libcamera_metadata（LLNDK）—— vendor 进程经 default namespace 的 system link 解析，
-#     不需要 /vendor 副本（2026-11-20 设备上 bind 空文件实测 camerahalserver 正常，
-#     映射到 /system/lib64，相机 5 个 device 正常枚举）；
-#   · libutils / libhidlbase 的字节补丁 —— blob 仓库里的二进制本身已是补丁态（A16 入库时打的），
-#     由 /cannon/code/vendor-blob-verify/verify_after_build.sh 校验，构建期不再改写。
-# 所以 BOARD_CANNON_VENDOR_PREASSEMBLE 已删除，脚本一并删除。
+# A16 老 vendor：m vendorimage 出裸镜像后必须装配注入库/打 blob 补丁，否则黑屏。
+# 【方案①·staging 预注入·真单步】build/make/core/Makefile 的 build-vendorimage-target 在调用
+# build_image **之前**按本变量运行 tools/a16_preassemble_vendor.sh：把库拷进 staging $P/vendor、
+# 就地打 blob 补丁、把新文件登记进 file_list.txt，再由 build_image 一并打包并由 file_contexts.bin
+# 自动打 SELinux 标签。**不用 mount**（build 的 nsjail user namespace 内禁 loop mount）。
+# 使 `m vendorimage` / `m bacon` 单步产出已装配的完整 vendor.img。留空则退化为裸镜像。
+BOARD_CANNON_VENDOR_PREASSEMBLE := $(DEVICE_PATH)/tools/a16_preassemble_vendor.sh
 BOARD_SUPER_PARTITION_SIZE := 9126805504 # TODO: Fix hardcoded value
 BOARD_SUPER_PARTITION_GROUPS := xiaomi_dynamic_partitions
 BOARD_XIAOMI_DYNAMIC_PARTITIONS_PARTITION_LIST := system vendor product system_ext
