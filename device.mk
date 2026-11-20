@@ -754,3 +754,29 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.gnss-service.cannon \
     android.hardware.gnss-V7-ndk
+
+# [cannon][A17][2026-11-21] 这批文件删掉 COPY 后要由 Soong 产出。
+# 前 6 项是"桩"：cannon_vendor_src_deps_* 是 vendor:true 的 cc_library_shared，
+# 靠 shared_libs 把 vendor_available 的接口库的 vendor 变体拉进 /vendor
+# （光写 PRODUCT_PACKAGES 只会装 system 变体，会被 cleanOldFiles 删掉）。
+# 后面的是普通模块，直接列 PRODUCT_PACKAGES 就能装进 /vendor。
+PRODUCT_PACKAGES += \
+    cannon_vendor_src_deps_gfx \
+    cannon_vendor_src_deps_audio \
+    cannon_vendor_src_deps_codec2 \
+    cannon_vendor_src_deps_mtk \
+    cannon_vendor_src_deps_sys \
+    libcamera_metadata_cannon \
+    android.hardware.audio.effect@6.0-impl \
+    android.hardware.audio.effect@7.0-impl \
+    android.hardware.wifi.common-V1-ndk \
+    audio.r_submix.default \
+    audio.usb.default \
+    audio_policy.stub \
+    libaedv \
+    libhwminijail \
+    libladder \
+    libprotobuf-cpp-full-21.12-vendorcompat \
+    libprotobuf-cpp-lite-21.12-vendorcompat \
+    libwpa_client \
+    wlan_assistant

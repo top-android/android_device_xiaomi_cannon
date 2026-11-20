@@ -89,8 +89,13 @@ BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
 #   等 257 个），而 AOSP 自己编的 vendor 二进制（vndservicemanager、graphics.composer 服务等）
 #   是按完整 libc++ 链接的 → 用 vendor 变体直接 "cannot locate symbol"，287 个 vendor 二进制
 #   全部加载失败，adbd 都起不来。MTK blob 是按精简版链的，所以 /vendor 只能放完整的 system 版。
-# 同理 libcutils/libexpat/libpng/libhidlmemory/libcurl/libunwindstack/libutilscallstack/liblzma/
-# libexif/android.hardware.media.c2@1.x 也都要 system 版。
+# [cannon][A17][2026-11-21] 其余库（libcurl/libexpat/libpng/liblzma/libexif/libunwindstack/
+#   libutilscallstack/libhidlmemory/libcutils/libcamera_metadata/media.c2@1.x）已改由
+#   device/xiaomi/cannon/Android.bp 的 cannon_vendor_src_deps_* 桩走源码构建进 /vendor，
+#   导出符号与 system 版一致，脚本里不再重复覆盖。
+#   另外脚本还要删掉 soong 自动生成的 /vendor/etc/linker.config.pb：它 provide 了
+#   libcamera_metadata.so，和 /system/etc/linker.config.pb 撞车 → linkerconfig
+#   "duplicate provider" FATAL → 无 ld.config.txt → 开不了机。
 BOARD_CANNON_VENDOR_PREASSEMBLE := $(DEVICE_PATH)/tools/a16_preassemble_vendor.sh
 BOARD_SUPER_PARTITION_SIZE := 9126805504 # TODO: Fix hardcoded value
 BOARD_SUPER_PARTITION_GROUPS := xiaomi_dynamic_partitions
