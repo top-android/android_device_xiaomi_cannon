@@ -5,9 +5,4 @@
 //
 
 soong_namespace {
-    // [cannon][A17][2026-11-20] vendor_bundle 里的桩模块要依赖 hardware/mediatek 下的
-    // MTK 接口库（vendor.mediatek.hardware.*），默认 namespace 看不到，显式 import。
-    imports: [
-        "hardware/mediatek",
-    ],
 }
