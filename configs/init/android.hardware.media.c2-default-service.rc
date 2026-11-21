@@ -1,0 +1,15 @@
+service android-hardware-media-c2-hal /vendor/bin/hw/android.hardware.media.c2-default-service
+    class hal
+    user mediacodec
+    group camera drmrpc mediadrm media_rw sdcard_rw media system audio inet net_bt net_bt_admin net_bw_acct sdcard_r
+    ioprio rt 4
+    writepid /dev/cpuset/foreground/tasks
+    # [cannon][A17] 四个 shim 缺一不可：
+    #  - libshim_no_vintf   ：去掉 VINTF 稳定性标记，blob 才肯加载
+    #  - libc2_bq_stub      ：SONAME 就是 libstagefright_bufferqueue_helper.so，
+    #                         blob 的 DT_NEEDED 命中这份空实现（A17 的 bqhelper
+    #                         装不进 /vendor）
+    #  - libshim_gbm_only   ：GraphicBufferMapper 6 参数 lock
+    #  - libshim_dmabuf_alloc：BufferAllocator 3 参数重载
+    setenv LD_PRELOAD /vendor/lib64/libshim_no_vintf.so:/vendor/lib64/libc2_bq_stub.so:/vendor/lib64/libshim_gbm_only.so:/vendor/lib64/libshim_dmabuf_alloc.so
+    task_profiles ProcessCapacityHigh

@@ -1,0 +1,5 @@
+service vendor.power-mediatek /vendor/bin/hw/android.hardware.power-service-mediatek
+    interface aidl android.hardware.power.IPower/default
+    class hal
+    user system
+    group system

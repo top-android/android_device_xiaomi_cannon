@@ -71,7 +71,6 @@ PRODUCT_PACKAGES += \
     fastbootd
 
 # A15 fsgen: system_ext/lib 与 lib64 同名 prebuilt .so 改用 cc_prebuilt_library_shared
-# （见 vendor/xiaomi/cannon/Android.bp；原 PRODUCT_COPY_FILES 触发 packaging conflict）
 PRODUCT_PACKAGES += \
     libcannon_audiotoolkit_system_ext \
     libcannon_videotelephony_system_ext
@@ -233,7 +232,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/com.nxp.mifare.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/sku_nfc/com.nxp.mifare.xml
 
 PRODUCT_PACKAGES += \
-    android.hardware.nfc@1.2-service \
     android.hardware.nfc@1.2.vendor \
     com.android.nfc_extras \
     Tag \
@@ -386,7 +384,6 @@ PRODUCT_PACKAGES += \
     vendor.mediatek.hardware.mtkpower@1.2-service.stub
 
 PRODUCT_PACKAGES += \
-    android.hardware.power-service-mediatek \
     android.hardware.power@1.0.vendor \
     android.hardware.power@1.1.vendor \
     android.hardware.power@1.2.vendor \
@@ -543,20 +540,14 @@ PRODUCT_COPY_FILES += \
 # 这些文件与已验证可用的 Magisk 模块 payload 字节一致。
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/prebuilts/c2aidl/android.hardware.media.c2-default-service:$(TARGET_COPY_OUT_VENDOR)/bin/hw/android.hardware.media.c2-default-service \
-    $(LOCAL_PATH)/prebuilts/c2aidl/android.hardware.media.c2-default-seccomp_policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/android.hardware.media.c2-default-seccomp_policy \
-    $(LOCAL_PATH)/prebuilts/c2aidl/libcodec2_aidl.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libcodec2_aidl.so \
-    $(LOCAL_PATH)/prebuilts/c2aidl/libcodec2_vndk.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libcodec2_vndk.so \
-    $(LOCAL_PATH)/prebuilts/c2aidl/libcodec2_hidl_plugin.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libcodec2_hidl_plugin.so \
-    $(LOCAL_PATH)/prebuilts/c2aidl/libdmabuf_a17.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libdmabuf_a17.so \
-    $(LOCAL_PATH)/prebuilts/c2aidl/libstagefright_bufferqueue_helper.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libstagefright_bufferqueue_helper.so \
-    $(LOCAL_PATH)/prebuilts/c2aidl/libstagefright_foundation.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libstagefright_foundation.so
-
-# 服务本体的 init rc 和 VINTF 片段由 frameworks/av 的 Soong 模块安装
-# （rc 已改成上面那套 LD_PRELOAD；二进制与 prebuilts 里的副本 md5 一致）。
-# 之前 rc/片段是手工单编该模块留下的 staging 残留，会多起一个服务，
-# 还会和 configs/vintf/manifest.xml 里的 AIDL 声明撞成 Conflicting FqInstance。
+    $(LOCAL_PATH)/prebuilts/c2aidl/libdmabuf_a17.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libdmabuf_a17.so
+# 上面的 c2 / power / nfc / audio 四个 Soong 模块已置 installable: false
+# （它们唯一的作用就是把同路径文件再装一遍，和这里的 prebuilts / 原厂 blob
+# 抢规则，产生一堆 "overriding commands for target" 警告）。
+# 代价是它们的 rc 与 VINTF 片段不再随模块安装，因此：
+#   - 4 个 rc 由 configs/init/ 提供（快照，内容与原 Soong 一致）
+#   - c2 与 power 的 AIDL VINTF 片段已并入 configs/vintf/manifest.xml
 PRODUCT_PACKAGES += \
-    android.hardware.media.c2-default-service \
     libc2_bq_stub \
     libshim_no_vintf \
     libshim_dmabuf_alloc
@@ -587,7 +578,6 @@ PRODUCT_PACKAGES += \
 # 之前是"手工注入 vendor 镜像"（每次裸 m vendorimage 都会丢 → 黑屏回归）。
 # 这里强制它们参与构建（保证 $(TARGET_OUT) 有产物）；真正拷进 /vendor 由
 #   scripts/a16_assemble_vendor.sh 在 m vendorimage 之后自动完成
-#   （注意：不能在本文件用 PRODUCT_COPY_FILES + $(TARGET_OUT)——解析期 TARGET_OUT 为空，
 #    实测会展开成 /lib64/xxx，无效）。
 PRODUCT_PACKAGES += \
     libunwindstack \
@@ -613,8 +603,6 @@ PRODUCT_PACKAGES += \
 # 2026-10-28 删掉 libbinder-v32 / libhidlbase-v32 / libstagefright_foundation-v33：
 # 全 vendor 树 799 个 ELF 里没有任何 DT_NEEDED 或字符串引用它们（死重量）。
 PRODUCT_COPY_FILES += \
-    prebuilts/vndk/v32/arm64/arch-arm-armv8-a/shared/vndk-sp/libutils.so:$(TARGET_COPY_OUT_VENDOR)/lib/libutils-v32.so \
-    prebuilts/vndk/v32/arm64/arch-arm64-armv8-a/shared/vndk-sp/libutils.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libutils-v32.so \
     prebuilts/vndk/v32/arm64/arch-arm64-armv8-a/shared/vndk-core/libcrypto.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libcrypto-v32.so
 
 PRODUCT_PACKAGES += \
@@ -705,7 +693,6 @@ PRODUCT_COPY_FILES += \
     device/xiaomi/cannon/prebuilt/linkerconfig/com.android.uprobestats/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.uprobestats/ld.config.txt \
     device/xiaomi/cannon/prebuilt/linkerconfig/com.android.webapp/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.webapp/ld.config.txt \
     device/xiaomi/cannon/prebuilt/linkerconfig/com.android.wifi/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/linkerconfig/com.android.wifi/ld.config.txt \
-    device/xiaomi/cannon/prebuilt/lib64/pixel-power-ext-V1-ndk.so:$(TARGET_COPY_OUT_VENDOR)/lib64/pixel-power-ext-V1-ndk.so \
     device/xiaomi/cannon/prebuilt/lib64/pixelatoms-cpp.so:$(TARGET_COPY_OUT_VENDOR)/lib64/pixelatoms-cpp.so
 
 # Inherit the proprietary files
