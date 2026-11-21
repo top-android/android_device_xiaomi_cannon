@@ -766,7 +766,6 @@ PRODUCT_PACKAGES += \
     cannon_vendor_src_deps_codec2 \
     cannon_vendor_src_deps_mtk \
     cannon_vendor_src_deps_sys \
-    libcamera_metadata_cannon \
     android.hardware.audio.effect@6.0-impl \
     android.hardware.audio.effect@7.0-impl \
     android.hardware.wifi.common-V1-ndk \

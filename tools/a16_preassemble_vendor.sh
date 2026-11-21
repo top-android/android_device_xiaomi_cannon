@@ -73,6 +73,21 @@ for d in lib64 lib; do
 done
 [ -f "$STG/lib64/libc++.so" ] || { echo "[preasm] ❌ staging 缺 lib64/libc++.so"; MISS=$((MISS+1)); }
 
+# ---- 2.5 libcamera_metadata.so：必须用 system 版（LLNDK）----
+# [cannon][A17][2026-11-21] libcamera_metadata 是 LLNDK 库，vendor 里那份必须和
+# system 里那份逐字节相同。源码构建的 vendor 变体只有 41KB（system 版 90KB），
+# cameraserver 解析 HAL 传回的 static metadata 会失败（"Not initialized"），
+# 相机 app 直接卡死。所以这里强制用 system 版覆盖 staging。
+for d in lib64 lib; do
+  s="$P/system/$d/libcamera_metadata.so"
+  [ -f "$s" ] || continue
+  mkdir -p "$STG/$d"
+  cp -f "$s" "$STG/$d/libcamera_metadata.so"
+  fl_add "$d/libcamera_metadata.so"
+  say "  +/$d/libcamera_metadata.so ← system（LLNDK，必须与 system 一致）"
+done
+[ -f "$STG/lib64/libcamera_metadata.so" ] || { echo "[preasm] ❌ staging 缺 lib64/libcamera_metadata.so"; MISS=$((MISS+1)); }
+
 # ---- 3. /etc/vintf/manifest.xml 幂等补 camera.provider ----
 MV="$STG/etc/vintf/manifest.xml"
 if [ -f "$MV" ]; then

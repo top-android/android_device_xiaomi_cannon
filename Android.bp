@@ -98,7 +98,6 @@ cc_library_shared {
         "android.hardware.media.c2@1.0",
         "android.hardware.media.c2@1.1",
         "android.hardware.media.c2@1.2",
-        "libcamera_metadata",
         "libcurl",
         "libexif",
         "libexpat",
@@ -262,8 +261,6 @@ cc_library_shared {
         "libbase",
         "libbinder",
         "libbluetooth_audio_session",
-        "libcodec2_hidl@1.1",
-        "libcodec2_hidl@1.2",
         "libcodec2_hidl_plugin",
         "libcppcose_rkp",
         "libcrypto",
@@ -274,7 +271,6 @@ cc_library_shared {
         "libkeymaster4_1support",
         "libkeymaster_messages",
         "libkeymaster_portable",
-        "libpcap",
         "libpuresoftkeymasterdevice",
         "librilutils",
         "libsensorndkbridge",
@@ -300,8 +296,6 @@ cc_library_shared {
         "libaudioutils",
         "libbase",
         "libbluetooth_audio_session",
-        "libcodec2_hidl@1.1",
-        "libcodec2_hidl@1.2",
         "libcppcose_rkp",
         "libeffects",
         "libeffectsconfig",
@@ -311,29 +305,13 @@ cc_library_shared {
         "libkeystore-engine-wifi-hidl",
         "libmedia_helper",
         "libnbaio_mono",
-        "libpcap",
-        "libprocessgroup",
         "libpuresoftkeymasterdevice",
         "libstagefright_aidl_bufferpool2",
         "libstagefright_bufferpool@2.0.1",
         "libtinyalsa",
         "libtinycompress",
-        "libtinyxml2",
         "libui",
     ],
     strip: { none: true },
 }
 
-// libcamera_metadata 是 native:vndk 链接类型，Soong 不会把 vendor 变体装进 /vendor，
-// 但 MTK camera blob 有 DT_NEEDED libcamera_metadata.so（libcamera_metadata_shim
-// 也是靠 dlsym(RTLD_NEXT) 转发给它）。这里用模块引用做成 prebuilt 装进 /vendor，
-// 文件名用 stem 保持 libcamera_metadata.so。
-cc_prebuilt_library_shared {
-    name: "libcamera_metadata_cannon",
-    stem: "libcamera_metadata",
-    vendor: true,
-    srcs: [":libcamera_metadata"],
-    strip: {
-        none: true,
-    },
-}
