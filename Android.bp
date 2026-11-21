@@ -240,6 +240,9 @@ cc_library_shared {
     compile_multilib: "64",
     srcs: ["cannon_vendor_src_deps.c"],
     shared_libs: [
+        // 141 条 COPY 删除后，64 位变体没人装；c2-default-service 是 64 位，
+        // DT_NEEDED 它，缺了硬解起不来。
+        "android.hardware.media.c2-V1-ndk",
         "android.hardware.drm-V1-ndk",
         "android.hardware.gnss-V1-ndk",
         "android.hardware.wifi-V2-ndk",
