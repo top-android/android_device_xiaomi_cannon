@@ -157,6 +157,16 @@ put "$DEV/configs/init/android.hardware.media.c2-default-service.rc" "etc/init/a
 put "$DEV/configs/init/android.hardware.power-service-mediatek.rc" "etc/init/android.hardware.power-service-mediatek.rc"
 put "$DEV/configs/init/android.hardware.nfc@1.2-service.rc" "etc/init/android.hardware.nfc@1.2-service.rc"
 put "$DEV/configs/init/android.hardware.audio.service.mediatek.rc" "etc/init/android.hardware.audio.service.mediatek.rc"
+# toolbox_vendor 置 installable:false 后不再生成这 6 个 toolbox 符号链接，补回。
+for n in getprop setprop start stop modprobe getevent; do
+  ln -sf toolbox "$STG/bin/$n"
+  fl_add "bin/$n"
+done
+say "  + bin/{getprop,setprop,start,stop,modprobe,getevent} → toolbox"
+# c2 / power 的 AIDL VINTF 片段（模块 installable:false 后不再随模块安装）。
+# 内容取自 11-20 镜像里的生成结果（version 9.0），与当时一致。
+put "$DEV/configs/vintf/manifest_media_c2_default.xml" "etc/vintf/manifest/manifest_media_c2_default.xml"
+put "$DEV/configs/vintf/power-mtk.xml" "etc/vintf/manifest/power-mtk.xml"
 # VINTF 片段：vendor/xiaomi/cannon 的 prebuilt_etc_xml 与 external/wpa_supplicant_8
 # 各装一份同一路径（soong 内部抢规则）。把前者置 installable:false，这里用
 # blob 原件覆盖，内容与原来一致。
