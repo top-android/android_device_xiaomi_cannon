@@ -100,5 +100,69 @@ if [ -f "$MV" ]; then
   fi
 else say "  ⚠ staging 缺 etc/vintf/manifest.xml"; MISS=$((MISS+1)); fi
 
+
+# ---- 4. blob / 预编译件覆盖 staging（原 PRODUCT_COPY_FILES 迁移至此）----
+# 这些路径 soong 也会装一份 vendor 变体，两条 make 规则抢同一 target 会刷一堆
+# "overriding commands for target" 警告。改成 build_image 前在这里覆盖：
+# 最终字节与原来的 COPY 结果一致，警告消失。
+ROOT="${SRC_ROOT:-/cannon/rom}"
+DEV="$ROOT/device/xiaomi/cannon"
+put() {
+  src="$1"; dst="$2"
+  if [ ! -f "$src" ]; then echo "[preasm] ❌ 源缺失: $src"; MISS=$((MISS+1)); return; fi
+  mkdir -p "$STG/$(dirname "$dst")"
+  cp -f "$src" "$STG/$dst"
+  fl_add "$dst"
+}
+put "$DEV/prebuilts/c2aidl/android.hardware.media.c2-default-seccomp_policy" "etc/seccomp_policy/android.hardware.media.c2-default-seccomp_policy"
+put "$DEV/prebuilts/c2aidl/libcodec2_aidl.so" "lib64/libcodec2_aidl.so"
+put "$DEV/prebuilts/c2aidl/libcodec2_vndk.so" "lib64/libcodec2_vndk.so"
+put "$DEV/prebuilts/c2aidl/libcodec2_hidl_plugin.so" "lib64/libcodec2_hidl_plugin.so"
+put "$DEV/prebuilts/c2aidl/libstagefright_bufferqueue_helper.so" "lib64/libstagefright_bufferqueue_helper.so"
+put "$DEV/prebuilts/c2aidl/libstagefright_foundation.so" "lib64/libstagefright_foundation.so"
+put "$ROOT/prebuilts/vndk/v32/arm64/arch-arm-armv8-a/shared/vndk-sp/libutils.so" "lib/libutils-v32.so"
+put "$ROOT/prebuilts/vndk/v32/arm64/arch-arm64-armv8-a/shared/vndk-sp/libutils.so" "lib64/libutils-v32.so"
+put "$ROOT/device/xiaomi/cannon/prebuilt/lib64/pixel-power-ext-V1-ndk.so" "lib64/pixel-power-ext-V1-ndk.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/etc/init/hostapd.android.rc" "etc/init/hostapd.android.rc"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/etc/init/wlan_assistant.rc" "etc/init/wlan_assistant.rc"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/ls_client.so" "lib/ls_client.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/libmnl.so" "lib64/libmnl.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/ls_client.so" "lib64/ls_client.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/etc/init/vndservicemanager.rc" "etc/init/vndservicemanager.rc"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/android.hardware.bluetooth.audio-impl.so" "lib64/android.hardware.bluetooth.audio-impl.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/ese_spi_nxp.so" "lib64/ese_spi_nxp.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/nfc_nci_nxp.so" "lib64/nfc_nci_nxp.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/android.hardware.audio@7.0-util.so" "lib/android.hardware.audio@7.0-util.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/hw/android.hardware.audio@7.0-impl.so" "lib/hw/android.hardware.audio@7.0-impl.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/libmedia_omx.so" "lib/libmedia_omx.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/libprotobuf-cpp-lite-21.12.so" "lib/libprotobuf-cpp-lite-21.12.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/libstagefright_omx.so" "lib/libstagefright_omx.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/libstagefright_omx_utils.so" "lib/libstagefright_omx_utils.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/libstagefright_xmlparser.so" "lib/libstagefright_xmlparser.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/vendor.xiaomi.hardware.mlipay@1.1.so" "lib/vendor.xiaomi.hardware.mlipay@1.1.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/libcodec2_hidl@1.0.so" "lib64/libcodec2_hidl@1.0.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/libcodec2_hidl@1.0.so" "lib/libcodec2_hidl@1.0.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/libcodec2_hidl@1.1.so" "lib64/libcodec2_hidl@1.1.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/libcodec2_hidl@1.1.so" "lib/libcodec2_hidl@1.1.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/libcodec2_hidl@1.2.so" "lib64/libcodec2_hidl@1.2.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/libcodec2_hidl@1.2.so" "lib/libcodec2_hidl@1.2.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/libtinyxml2.so" "lib64/libtinyxml2.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/libtinyxml2.so" "lib/libtinyxml2.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/libprocessgroup.so" "lib64/libprocessgroup.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/libpcap.so" "lib64/libpcap.so"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/libpcap.so" "lib/libpcap.so"
+# installable:false 的 HAL 模块不再装自己的 rc / VINTF 片段，用快照补回。
+put "$DEV/configs/init/android.hardware.media.c2-default-service.rc" "etc/init/android.hardware.media.c2-default-service.rc"
+put "$DEV/configs/init/android.hardware.power-service-mediatek.rc" "etc/init/android.hardware.power-service-mediatek.rc"
+put "$DEV/configs/init/android.hardware.nfc@1.2-service.rc" "etc/init/android.hardware.nfc@1.2-service.rc"
+put "$DEV/configs/init/android.hardware.audio.service.mediatek.rc" "etc/init/android.hardware.audio.service.mediatek.rc"
+put "$DEV/configs/vintf/power-mtk.xml" "etc/vintf/manifest/power-mtk.xml"
+# VINTF 片段：vendor/xiaomi/cannon 的 prebuilt_etc_xml 与 external/wpa_supplicant_8
+# 各装一份同一路径（soong 内部抢规则）。把前者置 installable:false，这里用
+# blob 原件覆盖，内容与原来一致。
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/etc/vintf/manifest/android.hardware.wifi.hostapd.xml" "etc/vintf/manifest/android.hardware.wifi.hostapd.xml"
+put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/etc/vintf/manifest/android.hardware.wifi.supplicant.xml" "etc/vintf/manifest/android.hardware.wifi.supplicant.xml"
+say "  + 覆盖 37 个 blob/prebuilt 文件（迁移自 PRODUCT_COPY_FILES）"
+
 if [ "$MISS" -ne 0 ]; then echo "[preasm] ⚠ 有 $MISS 项缺失/跳过（见上）"; exit 3; fi
 echo "[preasm] ✅ 完成：staging 预装配就位，file_list 已登记（build_image 将自动打标签）"
