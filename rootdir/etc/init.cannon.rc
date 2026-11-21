@@ -53,3 +53,17 @@ on boot && property:ro.boot.product.hardware.sku=nfc
     enable mtk_secure_element_hal_service
     enable vendor.nfc_hal_service
     enable nqnfc_1_2_hal_service
+
+# cannon: 开机下发 MTK NR 选项（AT+E5GOPT=7 = NSA+SA）
+# AOSP/LineageOS 的 telephony 不会调用 IMtkRadioEx::setNROption，modem 会停在出厂
+# 默认值 5（0b101，仅 NSA），纯 SA 网络下注册不上 NR，5G 图标永远不出现。
+# 必须在 framework 打开射频前完成，否则 modem 已按 5 注册，需要额外重注册才会上 NR。
+service cannon_nropt /vendor/bin/cannon_nropt 7
+    class core
+    user root
+    group root
+    oneshot
+    disabled
+
+on boot
+    start cannon_nropt

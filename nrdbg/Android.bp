@@ -1,0 +1,12 @@
+cc_binary {
+    name: "cannon_nropt",
+    srcs: ["nropt.cpp"],
+    vendor: true,
+    shared_libs: [
+        "vendor.mediatek.hardware.mtkradioex@3.0",
+        "libbase",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+    ],
+}
