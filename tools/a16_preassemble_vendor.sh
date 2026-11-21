@@ -151,19 +151,12 @@ put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/libtinyxml2.so" "lib/libt
 put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/libprocessgroup.so" "lib64/libprocessgroup.so"
 put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib64/libpcap.so" "lib64/libpcap.so"
 put "$ROOT/vendor/xiaomi/cannon/proprietary/vendor/lib/libpcap.so" "lib/libpcap.so"
-# installable:false 的 HAL 模块不再装自己的 rc / VINTF 片段，用快照补回。
+# installable:false 的 HAL 模块不再装自己的 init rc，用快照补回。
+# （VINTF 片段不受 installable 控制，仍由 Soong 正常安装，这里不处理。）
 put "$DEV/configs/init/android.hardware.media.c2-default-service.rc" "etc/init/android.hardware.media.c2-default-service.rc"
 put "$DEV/configs/init/android.hardware.power-service-mediatek.rc" "etc/init/android.hardware.power-service-mediatek.rc"
 put "$DEV/configs/init/android.hardware.nfc@1.2-service.rc" "etc/init/android.hardware.nfc@1.2-service.rc"
 put "$DEV/configs/init/android.hardware.audio.service.mediatek.rc" "etc/init/android.hardware.audio.service.mediatek.rc"
-# c2 / power 的 AIDL 声明已并入 etc/vintf/manifest.xml；
-# 这两个 Soong 安装的 VINTF 片段（vintf_fragments 不受 installable:false 控制）
-# 置空，否则 checkvintf 报 Conflicting FqInstance。
-for frag in manifest_media_c2_default.xml power-mtk.xml; do
-  printf '<manifest version="1.0" type="device"/>\n' > "$STG/etc/vintf/manifest/$frag"
-  fl_add "etc/vintf/manifest/$frag"
-  say "  = 置空 VINTF 片段 $frag（声明已并入主 manifest）"
-done
 # VINTF 片段：vendor/xiaomi/cannon 的 prebuilt_etc_xml 与 external/wpa_supplicant_8
 # 各装一份同一路径（soong 内部抢规则）。把前者置 installable:false，这里用
 # blob 原件覆盖，内容与原来一致。
