@@ -68,3 +68,6 @@
 /(vendor|system/vendor)/lib(64)?/android\.hardware\.graphics\.bufferqueue@2\.0\.so  u:object_r:same_process_hal_file:s0
 /(vendor|system/vendor)/lib(64)?/android\.hardware\.graphics\.composer@2\.1\.so     u:object_r:same_process_hal_file:s0
 /(vendor|system/vendor)/lib(64)?/android\.hardware\.graphics\.composer@2\.1-resources\.so u:object_r:same_process_hal_file:s0
+
+# cannon NR 选项设置（开机一次性下发 AT+E5GOPT=7，见 cannon_nropt.te）
+/vendor/bin/cannon_nropt                                                        u:object_r:cannon_nropt_exec:s0

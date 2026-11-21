@@ -113,21 +113,21 @@
             <Limit name="sample-rate" ranges="8000,11025,12000,16000,22050,24000,32000,44100,48000" />
             <Limit name="bitrate" range="8000-320000" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.mpeg4.decoder" type="video/mp4v-es" >
+        <MediaCodec name="c2.mtk.mpeg4.decoder" type="video/mp4v-es" rank="1" >
             <Alias name="OMX.MTK.VIDEO.DECODER.MPEG4" />
             <Limit name="size" min="16x16" max="2048x1088" />
             <Feature name="adaptive-playback"/>
             <Limit name="concurrent-instances" max="32" />
             <Limit name="performance-point-1920x1088" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.h263.decoder" type="video/3gpp" >
+        <MediaCodec name="c2.mtk.h263.decoder" type="video/3gpp" rank="1" >
             <Alias name="OMX.MTK.VIDEO.DECODER.H263" />
             <Limit name="size" min="128x96" max="1408x1152" />
             <Feature name="adaptive-playback"/>
             <Limit name="concurrent-instances" max="32" />
             <Limit name="performance-point-1280x720" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.avc.decoder" type="video/avc">
+        <MediaCodec name="c2.mtk.avc.decoder" type="video/avc" rank="1">
             <Alias name="OMX.MTK.VIDEO.DECODER.AVC" />
             <Limit name="size" min="64x64" max="4096x2176" />
             <Quirk name="wants-NAL-fragments" />
@@ -135,7 +135,7 @@
             <Limit name="concurrent-instances" max="32" />
             <Limit name="performance-point-3840x2160" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.avc.decoder.secure" type="video/avc" >
+        <MediaCodec name="c2.mtk.avc.decoder.secure" type="video/avc" rank="1" >
             <Alias name="OMX.MTK.VIDEO.DECODER.AVC.secure" />
             <Limit name="size" min="64x64" max="2048x1088" />
             <Quirk name="wants-NAL-fragments" />
@@ -144,14 +144,14 @@
             <Limit name="concurrent-instances" max="32" />
             <Limit name="performance-point-3840x2160" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.hevc.decoder" type="video/hevc">
+        <MediaCodec name="c2.mtk.hevc.decoder" type="video/hevc" rank="1">
             <Alias name="OMX.MTK.VIDEO.DECODER.HEVC" />
             <Limit name="size" min="16x16" max="4096x2176" />
             <Feature name="adaptive-playback"/>
             <Limit name="concurrent-instances" max="32" />
             <Limit name="performance-point-3840x2160" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.hevc.decoder.secure" type="video/hevc" >
+        <MediaCodec name="c2.mtk.hevc.decoder.secure" type="video/hevc" rank="1" >
             <Alias name="OMX.MTK.VIDEO.DECODER.HEVC.secure" />
             <Limit name="size" min="16x16" max="1920x1088" />
             <Quirk name="wants-NAL-fragments" />
@@ -160,28 +160,28 @@
             <Limit name="concurrent-instances" max="32" />
             <Limit name="performance-point-3840x2160" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.heif.decoder" type="image/vnd.android.heic" >
+        <MediaCodec name="c2.mtk.heif.decoder" type="image/vnd.android.heic" rank="1" >
             <Alias name="OMX.MTK.VIDEO.DECODER.HEIF" />
             <Limit name="size" min="16x16" max="16383x16383" />
             <Feature name="adaptive-playback"/>
             <Limit name="concurrent-instances" max="16" />
             <Limit name="performance-point-3840x2160" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.vpx.decoder" type="video/x-vnd.on2.vp8" >
+        <MediaCodec name="c2.mtk.vpx.decoder" type="video/x-vnd.on2.vp8" rank="1" >
             <Alias name="OMX.MTK.VIDEO.DECODER.VPX" />
             <Limit name="size" min="16x16" max="2048x1088" />
             <Feature name="adaptive-playback"/>
             <Limit name="concurrent-instances" max="32" />
             <Limit name="performance-point-1920x1088" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.vp9.decoder" type="video/x-vnd.on2.vp9">
+        <MediaCodec name="c2.mtk.vp9.decoder" type="video/x-vnd.on2.vp9" rank="1">
             <Alias name="OMX.MTK.VIDEO.DECODER.VP9" />
             <Limit name="size" min="16x16" max="4096x2176" />
             <Feature name="adaptive-playback"/>
             <Limit name="concurrent-instances" max="32" />
             <Limit name="performance-point-3840x2160" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.vp9.decoder.secure" type="video/x-vnd.on2.vp9" >
+        <MediaCodec name="c2.mtk.vp9.decoder.secure" type="video/x-vnd.on2.vp9" rank="1" >
             <Alias name="OMX.MTK.VIDEO.DECODER.VP9.secure" />
             <Limit name="size" min="16x16" max="1920x1088" />
             <Quirk name="wants-NAL-fragments" />
@@ -190,14 +190,14 @@
             <Limit name="concurrent-instances" max="32" />
             <Limit name="performance-point-3840x2160" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.mpeg2.decoder" type="video/mpeg2" >
+        <MediaCodec name="c2.mtk.mpeg2.decoder" type="video/mpeg2" rank="1" >
             <Alias name="OMX.MTK.VIDEO.DECODER.MPEG2" />
             <Limit name="size" min="16x16" max="2048x1088" />
             <Feature name="adaptive-playback"/>
             <Limit name="concurrent-instances" max="32" />
             <Limit name="performance-point-1920x1088" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.vc1.decoder" type="video/x-ms-wmv" >
+        <MediaCodec name="c2.mtk.vc1.decoder" type="video/x-ms-wmv" rank="1" >
             <Alias name="OMX.MTK.VIDEO.DECODER.VC1" />
             <Limit name="size" min="16x16" max="1920x1088" />
             <Limit name="concurrent-instances" max="32" />
@@ -321,7 +321,7 @@
             <Limit name="complexity" range="0-10"  default="5" />
             <Feature name="bitrate-modes" value="CBR" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.h263.encoder" type="video/3gpp" >
+        <MediaCodec name="c2.mtk.h263.encoder" type="video/3gpp" rank="1" >
             <Alias name="OMX.MTK.VIDEO.ENCODER.H263" />
             <Limit name="size" min="176x144" max="176x144" />
             <Limit name="alignment" value="16x16" />
@@ -329,7 +329,7 @@
             <Limit name="concurrent-instances" max="10" />
             <Limit name="performance-point-640x480" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.mpeg4.encoder" type="video/mp4v-es" >
+        <MediaCodec name="c2.mtk.mpeg4.encoder" type="video/mp4v-es" rank="1" >
             <Alias name="OMX.MTK.VIDEO.ENCODER.MPEG4" />
             <Limit name="size" min="176x144" max="176x144" />
             <Limit name="alignment" value="16x16" />
@@ -355,7 +355,7 @@
             <Feature name="bitrate-modes" value="VBR,CBR,CQ" />
             <Limit name="performance-point-3840x2160" value="30" />
         </MediaCodec>
-        <MediaCodec name="c2.mtk.heif.encoder" type="image/vnd.android.heic" >
+        <MediaCodec name="c2.mtk.heif.encoder" type="image/vnd.android.heic" rank="1" >
             <Alias name="OMX.MTK.VIDEO.ENCODER.HEIF" />
             <Limit name="size" min="16x16" max="16383x16383" />
             <Limit name="alignment" value="16x16" />

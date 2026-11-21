@@ -1,0 +1,13 @@
+# cannon: 开机时通过 MTK 私有 HIDL（vendor.mediatek.hardware.mtkradioex@3.0）
+# 下发 setNROption → AT+E5GOPT=7。AOSP/LineageOS 的 telephony 不会调用这个接口，
+# 导致 modem 停在默认值 5（仅 NSA），纯 SA 网络下注册不上 NR。
+#
+# 授权写法照抄 MTK 自带的 atcid（同为访问 rild 的 vendor 守护进程）：
+# rild 在 system/sepolicy/vendor/rild.te 里声明了 hal_server_domain(rild, hal_telephony)，
+# hal_client_domain() 会一并给出 hwservice_manager find 与 binder call 规则。
+
+type cannon_nropt, domain;
+type cannon_nropt_exec, exec_type, file_type, vendor_file_type;
+
+init_daemon_domain(cannon_nropt)
+hal_client_domain(cannon_nropt, hal_telephony)

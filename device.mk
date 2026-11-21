@@ -484,6 +484,10 @@ PRODUCT_PACKAGES += \
     android.hardware.health@2.1-service \
     android.hardware.health@2.1-impl:64
 
+# NR 选项：开机下发 AT+E5GOPT=7（AOSP telephony 不会调用 IMtkRadioEx::setNROption）
+PRODUCT_PACKAGES += \
+    cannon_nropt
+
 # Rootdir
 PRODUCT_PACKAGES += \
     fstab.mt6853 \
@@ -729,10 +733,9 @@ PRODUCT_PRODUCT_PROPERTIES += \
     ro.secure=0
 endif
 
-# 系统更新（Updater）：指向自己的元数据仓库
-# Updater 会把 {device} 换成 ro.product.device，本机是 cannon → cannon.json
+# 系统更新（Updater）：指向自己的元数据仓库（自建 raw 代理，不再走 jsDelivr）
 PRODUCT_PROPERTY_OVERRIDES += \
-    lineage.updater.uri=https://cdn.jsdelivr.net/gh/top-android/releases@main/{device}.json
+    lineage.updater.uri=https://raw.gtian.top/top-android/releases/refs/heads/main/cannon.json
 
 # [cannon][A17] codec2 HAL 选择固定 aidl：MTK 只有 A10 HIDL store，其 C2 组件在
 # A17 客户端下 start() 会死锁（回调 ABI 代差），失败还会泄漏 vdec 会话，
