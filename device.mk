@@ -727,7 +727,12 @@ PRODUCT_PRODUCT_PROPERTIES += \
 endif
 
 # 系统更新（Updater）：指向自己的元数据仓库（自建 raw 代理，不再走 jsDelivr）
-PRODUCT_PROPERTY_OVERRIDES += \
+# 必须走 PRODUCT_SYSTEM_PROPERTIES（→ /system/build.prop）：
+# A17 起 BOARD_PROPERTY_OVERRIDES_SPLIT_ENABLED 默认 true，PRODUCT_PROPERTY_OVERRIDES
+# 会被并进 /vendor/build.prop；而 init 从 vendor 分区加载属性时按 SELinux 校验上下文，
+# lineage.* 没有 property_contexts 条目（落到 default_prop），vendor 上下文无权设置，
+# init 直接丢弃 → 运行时 getprop 为空，Updater 退回 download.lineageos.org 永远查不到更新。
+PRODUCT_SYSTEM_PROPERTIES += \
     lineage.updater.uri=https://raw.gtian.top/top-android/releases/refs/heads/main/cannon.json
 
 # [cannon][A17] codec2 HAL 选择固定 aidl：MTK 只有 A10 HIDL store，其 C2 组件在
