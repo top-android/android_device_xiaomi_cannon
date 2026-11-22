@@ -16,7 +16,7 @@ static const variant_info_t cannon_info = {
     .brand = "Xiaomi",
     .device = "cannon",
     .model = "M2007J22C",
-    .build_fingerprint = "Redmi/cannon/cannon:12/SP1A.210812.016/V13.0.3.0.SJECNXM:user/release-keys",
+    .build_fingerprint = "Redmi/cannon/cannon:12/SP1A.210812.016/V14.0.6.0.SJECNXM:user/release-keys",
 
     .multisim = true,
     .nfc = false,
