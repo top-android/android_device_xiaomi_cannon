@@ -784,3 +784,4 @@ PRODUCT_PACKAGES += \
     cannon_vendor_src_deps_aidl64 \
     cannon_vendor_src_deps_native32 \
     cannon_vendor_src_deps_native64
+PRODUCT_PACKAGE_OVERLAYS += device/xiaomi/cannon/overlay-carrierconfig

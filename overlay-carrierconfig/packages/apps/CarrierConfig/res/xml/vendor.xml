@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<!-- cannon: 5G NR 信号条按 ssRsrp 计算，阈值对齐 LTE。
+     注意：resource 里的 XML 会被 aapt 编译，mnc="01" 会被当成整数 1，
+     和 CarrierIdentifier 的字符串 "01" 匹配不上，所以这里不加 mcc/mnc 过滤。 -->
+<carrier_config_list>
+    <carrier_config>
+        <int name="parameters_use_for_5g_nr_signal_bar_int" value="1" />
+        <int-array name="5g_nr_ssrsrp_thresholds_int_array" num="4">
+            <item value="-128" /><item value="-118" /><item value="-108" /><item value="-98" />
+        </int-array>
+    </carrier_config>
+</carrier_config_list>
