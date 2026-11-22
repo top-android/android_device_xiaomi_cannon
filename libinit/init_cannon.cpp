@@ -29,7 +29,7 @@ static const variant_info_t cannong_info = {
     .brand = "Xiaomi",
     .device = "cannong",
     .model = "M2007J22G",
-    .build_fingerprint = "Redmi/cannong_global/cannong:12/SP1A.210812.016/V13.0.3.0.SJEMIXM:user/release-keys",
+    .build_fingerprint = "Redmi/cannong_global/cannong:12/SP1A.210812.016/V14.0.4.0.SJEMIXM:user/release-keys",
 
     .multisim = true,
     .nfc = true,
